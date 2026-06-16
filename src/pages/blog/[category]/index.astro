@@ -1,0 +1,48 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ArticleCard from "../../../components/ArticleCard.astro";
+import { existingCategories, labelFor } from "../../../lib/categories";
+
+export async function getStaticPaths() {
+  const cats = await existingCategories();
+  const all = await getCollection("blog", ({ data }) => !data.draft);
+  return cats.map((category) => ({
+    params: { category },
+    props: {
+      posts: all
+        .filter((p) => p.data.category === category)
+        .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf()),
+    },
+  }));
+}
+
+const { category } = Astro.params;
+const { posts } = Astro.props;
+const label = labelFor(category as string);
+---
+
+<BaseLayout title={`${label} — AZ Pet Shop`} description={`Guias e comparativos sobre ${label.toLowerCase()}.`}>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h1 class="mb-8 text-3xl font-black text-navy">{label}</h1>
+    {
+      posts.length === 0 ? (
+        <p class="text-ink/70">Em breve, conteúdo novo nesta categoria.</p>
+      ) : (
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((p) => (
+            <ArticleCard
+              href={`/blog/${p.id}`}
+              title={p.data.title}
+              excerpt={p.data.excerpt}
+              category={p.data.category}
+              type={p.data.type}
+              hero={p.data.hero}
+              heroAlt={p.data.heroAlt}
+            />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

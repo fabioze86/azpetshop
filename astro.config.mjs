@@ -1,35 +1,16 @@
 // @ts-check
+import { defineConfig } from "astro/config";
+import mdx from "@astrojs/mdx";
+import sitemap from "@astrojs/sitemap";
 
-import mdx from '@astrojs/mdx';
-import sitemap from '@astrojs/sitemap';
-import { defineConfig, fontProviders } from 'astro/config';
-
-// https://astro.build/config
+// IMPORTANTE: troque para o domínio final antes de publicar.
+// Ele alimenta o sitemap, o RSS e as URLs canônicas.
+//
+// Tailwind v4 está configurado via PostCSS (postcss.config.mjs), não via
+// plugin Vite — o @tailwindcss/vite ainda não é compatível com o bundler
+// "rolldown-vite" que o Astro 6 usa por padrão (bug conhecido, abr/2026:
+// github.com/withastro/astro/issues/16542).
 export default defineConfig({
-	site: 'https://example.com',
-	integrations: [mdx(), sitemap()],
-	fonts: [
-		{
-			provider: fontProviders.local(),
-			name: 'Atkinson',
-			cssVariable: '--font-atkinson',
-			fallbacks: ['sans-serif'],
-			options: {
-				variants: [
-					{
-						src: ['./src/assets/fonts/atkinson-regular.woff'],
-						weight: 400,
-						style: 'normal',
-						display: 'swap',
-					},
-					{
-						src: ['./src/assets/fonts/atkinson-bold.woff'],
-						weight: 700,
-						style: 'normal',
-						display: 'swap',
-					},
-				],
-			},
-		},
-	],
+  site: "https://www.azpetshop.com.br",
+  integrations: [mdx(), sitemap()],
 });

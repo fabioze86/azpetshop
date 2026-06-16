@@ -1,63 +1,71 @@
-# Astro Starter Kit: Blog
+# AZ Pet Shop — portal de conteúdo/afiliado (Astro)
 
-```sh
-npm create astro@latest -- --template blog
+Site estático em Astro 5 + Tailwind v4, no estilo editorial Wirecutter, com a
+identidade da marca AZ Pet Shop. Sem carrinho: a conversão sai por link de
+afiliado e por links para o atacado (mypetbrasil).
+
+## Rodar localmente
+
+```bash
+npm install
+npm run dev        # http://localhost:4321
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Abra o projeto no Cursor ou VS Code. É aqui que você edita tudo.
 
-Features:
+## Estrutura
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-├── public/
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+```
+src/
+  content/blog/<categoria>/<slug>.mdx   <- cada post (a URL espelha o caminho)
+  content.config.ts                     <- schema do post (guia | roundup, products[])
+  components/   Header, Footer, ArticleCard, PickBox, ComparisonTable, AffiliateButton
+  layouts/      BaseLayout (SEO, fontes Nunito, canonical)
+  pages/        index, blog/, blog/[category]/, blog/[category]/[slug]
+  styles/global.css                     <- tokens da marca (@theme do Tailwind v4)
+  lib/categories.ts                     <- labels e categorias existentes
+scripts/migrate.mjs                     <- importa os 109 posts do MKX
+public/_redirects                       <- redirects das rotas antigas da loja
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+URL preservada: um arquivo em `src/content/blog/caes/petiscos-saudaveis.mdx`
+gera exatamente `/blog/caes/petiscos-saudaveis` — igual ao site atual.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Migrar os 109 posts
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+```bash
+LIMIT=1 node scripts/migrate.mjs   # testa com 1 post primeiro
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+Confira o `.mdx` gerado. Se o corpo vier errado/vazio, ajuste `CONTENT_SELECTOR`
+no topo do `scripts/migrate.mjs` (inspecione um artigo no DevTools e use a classe
+do container do texto). Depois rode tudo:
 
-## 🧞 Commands
+```bash
+node scripts/migrate.mjs
+```
 
-All commands are run from the root of the project, from a terminal:
+Os posts marcados como `type: "roundup"` (ex.: "5 melhores antipulgas") precisam
+ter o `products[]` preenchido à mão no frontmatter, com os links de afiliado
+(Amazon `?tag=azpetshop-20`, etc.) — é o que alimenta a tabela e os boxes "Nossa
+escolha". Veja o exemplo em `src/content/blog/caes/melhores-antipulgas-cachorros.mdx`.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Publicar (Cloudflare Pages)
 
-## 👀 Want to learn more?
+1. Suba pro GitHub:
+   ```bash
+   git init && git add -A && git commit -m "init azpetshop"
+   git branch -M main && git remote add origin <seu-repo> && git push -u origin main
+   ```
+2. Cloudflare Pages → Create application → Connect to Git → selecione o repo.
+   - Build command: `npm run build`
+   - Output directory: `dist`
+3. Aponte `azpetshop.com.br` para o projeto Pages. A partir daí, todo `git push`
+   publica sozinho.
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Antes de publicar
 
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+- Em `astro.config.mjs`, confirme `site` com o domínio final (alimenta sitemap e canonical).
+- Preencha `public/_redirects` com as rotas antigas da LOJA (que sai do ar) → 301
+  para o conteúdo ou para o mypetbrasil. As URLs do blog já são preservadas.
+- Troque os links de afiliado de exemplo pelos reais.

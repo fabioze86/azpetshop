@@ -1,0 +1,78 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PickBox from "../../../components/PickBox.astro";
+import ComparisonTable from "../../../components/ComparisonTable.astro";
+import { labelFor } from "../../../lib/categories";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  return posts.map((post) => {
+    const [category, ...slugParts] = post.id.split("/");
+    return {
+      params: { category, slug: slugParts.join("/") },
+      props: { post },
+    };
+  });
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+
+const fmt = (date: Date) =>
+  date.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<BaseLayout title={`${d.title} — AZ Pet Shop`} description={d.excerpt} image={d.hero}>
+  <article class="mx-auto max-w-3xl px-4 py-10">
+    <a href={`/blog/${d.category}`} class="text-xs font-extrabold uppercase tracking-wider text-pink">
+      {labelFor(d.category)}
+    </a>
+    <h1 class="mt-3 text-3xl font-black leading-tight text-navy md:text-4xl">{d.title}</h1>
+    <p class="mt-4 text-lg text-ink/75">{d.excerpt}</p>
+
+    <div class="mt-5 flex items-center gap-3 border-b border-line pb-5 text-sm text-ink/60">
+      <span>{d.author}</span>
+      <span>·</span>
+      <time datetime={(d.updatedAt ?? d.publishedAt).toISOString()}>
+        {d.updatedAt ? `Atualizado em ${fmt(d.updatedAt)}` : fmt(d.publishedAt)}
+      </time>
+    </div>
+
+    {
+      d.hero && (
+        <img
+          src={d.hero}
+          alt={d.heroAlt ?? d.title}
+          class="mt-6 w-full rounded-2xl object-cover"
+        />
+      )
+    }
+
+    <!-- Roundup: tabela comparativa no topo (padrão Wirecutter) -->
+    {d.type === "roundup" && d.products.length > 0 && <ComparisonTable products={d.products} />}
+
+    <!-- Corpo do artigo -->
+    <div class="prose prose-lg mt-6 max-w-none">
+      <Content />
+    </div>
+
+    <!-- Blocos "Nossa escolha" a partir do frontmatter -->
+    {
+      d.products.length > 0 && (
+        <section class="mt-10">
+          <h2 class="text-2xl font-extrabold text-navy">Nossas recomendações</h2>
+          {d.products.map((p) => (
+            <PickBox product={p} />
+          ))}
+        </section>
+      )
+    }
+
+    <p class="mt-10 rounded-xl bg-mist p-4 text-xs text-ink/60">
+      Transparência: alguns links acima são de afiliados. A AZ Pet Shop pode receber
+      comissão por compras realizadas, sem custo adicional para você.
+    </p>
+  </article>
+</BaseLayout>

@@ -1,0 +1,79 @@
+---
+import AffiliateButton from "./AffiliateButton.astro";
+
+interface Product {
+  name: string;
+  image?: string;
+  affiliateUrl: string;
+  price?: string;
+  badge?: string;
+  pros?: string[];
+  cons?: string[];
+  verdict?: string;
+}
+const { product } = Astro.props as { product: Product };
+---
+
+<div class="my-8 overflow-hidden rounded-2xl border border-line bg-paper shadow-sm">
+  {
+    product.badge && (
+      <div class="bg-navy px-5 py-2 text-xs font-extrabold uppercase tracking-wider text-white">
+        {product.badge}
+      </div>
+    )
+  }
+  <div class="grid gap-5 p-6 sm:grid-cols-[160px_1fr]">
+    <div class="flex items-center justify-center">
+      {
+        product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            class="max-h-40 w-auto object-contain"
+          />
+        ) : (
+          <div class="flex h-40 w-full items-center justify-center rounded-xl bg-mist text-cyan">
+            <span class="text-3xl">🐾</span>
+          </div>
+        )
+      }
+    </div>
+    <div>
+      <h3 class="text-xl font-extrabold text-navy">{product.name}</h3>
+      {product.price && <p class="mt-1 font-bold text-green">{product.price}</p>}
+      {product.verdict && <p class="mt-2 text-sm text-ink/80">{product.verdict}</p>}
+
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        {
+          product.pros && product.pros.length > 0 && (
+            <ul class="space-y-1 text-sm">
+              {product.pros.map((p) => (
+                <li class="flex gap-2">
+                  <span class="text-green">✓</span>
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        {
+          product.cons && product.cons.length > 0 && (
+            <ul class="space-y-1 text-sm text-ink/70">
+              {product.cons.map((c) => (
+                <li class="flex gap-2">
+                  <span class="text-pink">✕</span>
+                  <span>{c}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+
+      <div class="mt-5">
+        <AffiliateButton href={product.affiliateUrl} label="Ver preço" />
+      </div>
+    </div>
+  </div>
+</div>

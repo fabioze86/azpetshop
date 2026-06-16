@@ -1,0 +1,12 @@
+# Cloudflare Pages redirects
+# As URLs do blog (/blog/categoria/slug) já são preservadas pela estrutura do Astro,
+# então não precisam de redirect.
+#
+# Use este arquivo para encaminhar as ROTAS ANTIGAS DA LOJA (que sai do ar) para
+# o conteúdo ou para os canais de venda. Exemplos:
+#
+# /cachorro/*        /blog/caes            301
+# /gatos/*           /blog/gatos           301
+# /carrinho-de-compra/   https://www.mypetbrasil.com   302
+#
+# Rode o crawl do site antigo (passo no README) para gerar esta lista completa.

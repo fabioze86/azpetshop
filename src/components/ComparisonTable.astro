@@ -1,0 +1,43 @@
+---
+interface Product {
+  name: string;
+  affiliateUrl: string;
+  price?: string;
+  badge?: string;
+}
+const { products } = Astro.props as { products: Product[] };
+---
+
+<div class="my-8 overflow-x-auto rounded-2xl border border-line">
+  <table class="w-full border-collapse text-left text-sm">
+    <thead>
+      <tr class="bg-mist text-navy">
+        <th class="px-4 py-3 font-extrabold">Produto</th>
+        <th class="px-4 py-3 font-extrabold">Destaque</th>
+        <th class="px-4 py-3 font-extrabold">Preço</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        products.map((p) => (
+          <tr class="border-t border-line align-middle">
+            <td class="px-4 py-3 font-bold text-navy">{p.name}</td>
+            <td class="px-4 py-3">{p.badge ?? "—"}</td>
+            <td class="px-4 py-3 font-bold text-green">{p.price ?? "—"}</td>
+            <td class="px-4 py-3">
+              <a
+                href={p.affiliateUrl}
+                target="_blank"
+                rel="sponsored nofollow noopener"
+                class="font-bold text-pink hover:text-pink-600"
+              >
+                Ver oferta →
+              </a>
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
