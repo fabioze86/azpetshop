@@ -1,21 +1,10 @@
-// scripts/migrate.mjs
-// Migra os posts do blog antigo (MKX) para arquivos .mdx do Astro,
+// scripts/migrate.mjs — v3
+// Migra os posts do blog MKX para arquivos .mdx do Astro,
 // PRESERVANDO a URL: /blog/<categoria>/<slug> -> src/content/blog/<categoria>/<slug>.mdx
 //
-// Como usar (na sua máquina, NÃO no sandbox):
-//   npm install
-//   node scripts/migrate.mjs
-//
-// Requisitos: Node 18+ (tem fetch nativo). Usa cheerio + turndown.
-//
-// Estratégia:
-//   1. Varre as páginas de listagem (/blog, /blog/pagina-2/ ...) e coleta os links de artigo.
-//   2. Para cada artigo, extrai título, descrição, imagem de capa, data e o CORPO.
-//   3. Converte o corpo HTML -> Markdown e grava o .mdx com frontmatter.
-//
-// IMPORTANTE: o seletor do corpo (CONTENT_SELECTOR) é a parte que depende do tema MKX.
-// Rode primeiro com LIMIT=1, confira o .mdx gerado e ajuste o seletor se precisar
-// (instruções logo abaixo).
+// PowerShell:
+//   $env:LIMIT="1"; node scripts/migrate.mjs    <- 1 post de teste
+//   node scripts/migrate.mjs                    <- todos os 109
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -23,148 +12,188 @@ import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
 import TurndownService from "turndown";
 
-const BASE = "https://www.azpetshop.com.br";
-const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "content", "blog");
-const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : Infinity; // ex.: LIMIT=1 node scripts/migrate.mjs
-
-// Quantas páginas de listagem varrer (o site mostra "1..8" + »).
-const MAX_LISTING_PAGES = 10;
-
-// Onde o corpo do artigo vive no HTML do MKX. AJUSTE se o output sair errado.
-// Candidatos comuns: ".materia", ".noticia", ".blog-content", "#conteudo", "article".
-const CONTENT_SELECTOR = ".materia, .noticia-conteudo, article, .blog-post, #conteudo-noticia";
+const BASE  = "https://www.azpetshop.com.br";
+const OUT   = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "content", "blog");
+const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : Infinity;
+const MAX_LISTING_PAGES = 12;
 
 const td = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
 
-const slugify = (s) =>
-  s.toString().toLowerCase().trim()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
 async function getHtml(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "azpetshop-migrator" } });
-  if (!res.ok) throw new Error(`${res.status} em ${url}`);
+  const res = await fetch(url, {
+    headers: { "User-Agent": "azpetshop-migrator/3.0" },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
 }
 
-// 1) Coleta todos os links de artigo das páginas de listagem
+// ─── 1. Coleta links ────────────────────────────────────────────────────────
 async function collectArticleLinks() {
   const links = new Set();
   for (let page = 1; page <= MAX_LISTING_PAGES; page++) {
     const url = page === 1 ? `${BASE}/blog` : `${BASE}/blog/pagina-${page}/`;
     let html;
-    try {
-      html = await getHtml(url);
-    } catch {
-      break; // acabou a paginação
-    }
+    try { html = await getHtml(url); } catch { break; }
+
     const $ = cheerio.load(html);
     let found = 0;
     $('a[href*="/blog/"]').each((_, el) => {
       const href = $(el).attr("href") || "";
-      // só /blog/<categoria>/<slug> (3 segmentos), ignorando paginação/listagem
-      const m = href.match(/\/blog\/([a-z0-9-]+)\/([a-z0-9-]+)\/?$/i);
-      if (m && !href.includes("/pagina-")) {
-        links.add(`${BASE}/blog/${m[1]}/${m[2]}`);
+      if (/\/blog\/[a-z0-9-]+\/[a-z0-9-]+\/?$/i.test(href) && !href.includes("/pagina-")) {
+        const clean = href.replace(/\/$/, "").replace(/^https?:\/\/[^/]+/, "");
+        links.add(`${BASE}${clean}`);
         found++;
       }
     });
-    console.log(`Listagem ${url}: ${found} links`);
+    console.log(`  listagem p${page}: ${found} links`);
     if (found === 0 && page > 1) break;
   }
   return [...links];
 }
 
-// 2) Extrai um artigo
+// ─── 2. Extrai um artigo ─────────────────────────────────────────────────────
 async function parseArticle(url) {
   const html = await getHtml(url);
   const $ = cheerio.load(html);
 
+  // category e slug da URL
   const seg = url.replace(`${BASE}/blog/`, "").replace(/\/$/, "").split("/");
   const category = seg[0];
-  const slug = seg[1];
+  const slug     = seg[1];
 
-  const meta = (p) => $(`meta[property="${p}"]`).attr("content") || "";
-  let title = (meta("og:title") || $("title").text())
-    .replace(/\s*-\s*Blog\s*-\s*AZ ?PetShop\s*$/i, "")
-    .replace(/^AZ Pet ?Shop\s*/i, "")
+  // Meta tags
+  const og   = (p) => $(`meta[property="${p}"]`).attr("content") || "";
+  const name  = (n) => $(`meta[name="${n}"]`).attr("content") || "";
+  const title  = (og("og:title") || $("title").text())
+    .replace(/\s*[-–|]\s*Blog\s*[-–|]?\s*AZ ?Pet ?Sho?p?\s*$/i, "")
+    .replace(/^AZ Pet ?Sho?p?\s*[-–|]?\s*/i, "")
     .trim();
-  const excerpt = meta("og:description") || $('meta[name="description"]').attr("content") || "";
-  const hero = meta("og:image") || $('img[src*="/img/news/"]').first().attr("src") || "";
+  const excerpt = og("og:description") || name("description") || "";
+  const hero    = og("og:image") || $('img[src*="/img/news/"]').first().attr("src") || "";
 
-  // Corpo do artigo
-  let $body = $(CONTENT_SELECTOR).first();
-  if (!$body || $body.length === 0) {
-    // Fallback: pega o maior bloco de <p> da página
-    let best = null, bestLen = 0;
-    $("div, section, article").each((_, el) => {
-      const len = $(el).find("p").text().length;
-      if (len > bestLen) { bestLen = len; best = el; }
-    });
-    $body = best ? $(best) : $("body");
+  // ── LIMPEZA HTML (reduz ruído antes de converter) ────────────────────────
+  $("script, style, form, noscript, iframe").remove();
+  $("header, footer, nav, aside").remove();
+  [
+    "menu", "cookie", "lgpd", "popup",
+    "sidebar", "widget", "breadcrumb",
+    "share", "social", "newsletter",
+    "relacionados", "banner-desconto",
+  ].forEach((t) => $(`[class*="${t}"], [id*="${t}"]`).remove());
+  $('img[src*="/img/blog/"], img[src*="/img/logo"]').remove();
+
+  // ── CONVERSÃO para Markdown bruto ────────────────────────────────────────
+  let md = td.turndown($("body").html() || "").trim();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PÓS-PROCESSAMENTO DO MARKDOWN — abordagem mais confiável que DOM para
+  // os padrões específicos do MKX
+
+  // 1. Corta o TOPO: remove tudo até (e incluindo) a hero image
+  //    A hero no MKX tem URL no padrão /img/news/<id>/000.webp
+  const heroPattern = /!\[.*?\]\(https?:\/\/[^)]*\/img\/news\/[^)]+\)/;
+  const heroMatch   = heroPattern.exec(md);
+  if (heroMatch) {
+    // Pega tudo após a linha da hero image
+    md = md.slice(heroMatch.index + heroMatch[0].length).trim();
+  } else {
+    // Fallback: remove blocos de texto de cookie e links de redes sociais do topo
+    md = md
+      .replace(/^Nós usamos cookies[\s\S]*?Prosseguir\s*\n+/i, "")
+      .replace(/^(\*\s*\[(?:Instagram|Facebook|Youtube|Twitter|Tiktok)[^\]]*\]\([^)]*\)\s*\n*)+/im, "")
+      .trim();
   }
 
-  // Limpeza: remove blocos de "Você pode gostar", newsletter, redes, scripts
-  $body.find("script, style, form, .newsletter, .relacionados, .voce-pode-gostar").remove();
-  $body.find('a[href*="instagram"], a[href*="facebook"], a[href*="youtube"]').closest("ul").remove();
-
-  // Remove a seção "Você pode gostar de ver também" em diante, se existir como heading
-  $body.find("h2, h3, h4").each((_, el) => {
-    if (/voc[eê] pode gostar/i.test($(el).text())) {
-      $(el).nextAll().remove();
-      $(el).remove();
+  // 2. Remove o excerpt duplicado logo no topo do corpo
+  //    (já está no frontmatter, não precisa repetir no artigo)
+  if (excerpt) {
+    const excerptStart = excerpt.slice(0, 50).trim();
+    if (md.startsWith(excerptStart)) {
+      const firstBreak = md.indexOf("\n\n");
+      md = firstBreak !== -1 ? md.slice(firstBreak).trim() : md;
     }
-  });
+  }
 
-  const bodyHtml = $body.html() || "";
-  let markdown = td.turndown(bodyHtml).trim();
+  // 3. Corta o RODAPÉ e artigos relacionados
+  //    Padrões que marcam o fim do conteúdo real no MKX:
+  const bottomCuts = [
+    /\n+\*\s*\[Instagram\]\(https?:\/\/(www\.)?instagram/i,   // redes sociais repetidas
+    /\n+#{1,5}\s*Você pode gostar/i,                           // seção de relacionados
+    /\n+#{1,4}\s*Ganhe Agora/i,                                // banner de desconto
+    /\n+#{1,4}\s*O pet shop online/i,                          // rodapé institucional
+    /\n+#{1,4}\s*AZ Pet ?Shop\s*\n(?!.*artigo|.*guia)/i,       // rodapé (não heading de artigo)
+    /\n+© \d{4}/,                                              // copyright
+    /\nGRUPO AZ COMERCIAL/i,
+    /\nDesenvolvido por/i,
+  ];
+  for (const pat of bottomCuts) {
+    const idx = md.search(pat);
+    if (idx > 100) { md = md.slice(0, idx).trim(); break; }
+  }
 
-  // Remove o H1/H2 do título duplicado e a descrição repetida no topo
-  markdown = markdown.replace(/^#{1,3}\s+.*\n/, "").trim();
+  // 4. Remove artefatos menores restantes
+  md = md
+    .replace(/^(caes|gatos|passaros|roedores|hamster|pássaros)\s*\n+/im, "")
+    .replace(/^Por:\s*.+\n+/im, "")
+    .replace(/^\d+ min\.? de leitura\s*\n+/im, "")
+    .replace(/^#{1,2}\s+.+\n+/, "")  // H1/H2 de título duplicado
+    .trim();
+
+  // ══════════════════════════════════════════════════════════════════════════
 
   const type = /melhor|melhores|top \d|comparativo|vs\b/i.test(title) ? "roundup" : "guia";
-
-  return { category, slug, title, excerpt, hero, type, markdown };
+  return { category, slug, title, excerpt, hero, type, markdown: md };
 }
 
-function toMdx(a) {
-  const fm = [
+// ─── 3. Escreve o .mdx ──────────────────────────────────────────────────────
+function toMdx({ title, excerpt, category, type, hero, markdown }) {
+  const lines = [
     "---",
-    `title: ${JSON.stringify(a.title)}`,
-    `excerpt: ${JSON.stringify(a.excerpt)}`,
-    `category: ${JSON.stringify(a.category)}`,
-    `type: ${JSON.stringify(a.type)}`,
-    a.hero ? `hero: ${JSON.stringify(a.hero)}` : null,
+    `title: ${JSON.stringify(title)}`,
+    `excerpt: ${JSON.stringify(excerpt)}`,
+    `category: ${JSON.stringify(category)}`,
+    `type: ${JSON.stringify(type)}`,
+    hero ? `hero: ${JSON.stringify(hero)}` : null,
     `publishedAt: ${new Date().toISOString().slice(0, 10)}`,
     `author: "Equipe AZ Pet Shop"`,
-    // type roundup: depois da migração, preencha products[] manualmente com os links de afiliado.
     "---",
     "",
-  ].filter(Boolean).join("\n");
-  return fm + a.markdown + "\n";
+    markdown,
+    "",
+  ].filter((l) => l !== null);
+  return lines.join("\n");
 }
 
+// ─── 4. Main ────────────────────────────────────────────────────────────────
 async function main() {
-  console.log("Coletando links...");
+  console.log("Coletando links do blog...");
   const links = await collectArticleLinks();
-  console.log(`Total de artigos encontrados: ${links.length}`);
+  console.log(`\nTotal encontrado: ${links.length} artigos`);
+  console.log(`Migrando: ${LIMIT === Infinity ? "todos" : LIMIT}\n`);
 
   let ok = 0, fail = 0;
   for (const url of links.slice(0, LIMIT)) {
     try {
-      const a = await parseArticle(url);
-      const dir = join(OUT, a.category);
+      const article = await parseArticle(url);
+      const dir = join(OUT, article.category);
       await mkdir(dir, { recursive: true });
-      await writeFile(join(dir, `${a.slug}.mdx`), toMdx(a), "utf8");
-      console.log(`✓ ${a.category}/${a.slug}`);
+      await writeFile(join(dir, `${article.slug}.mdx`), toMdx(article), "utf8");
+      console.log(`✓  ${article.category}/${article.slug}`);
       ok++;
     } catch (e) {
-      console.warn(`✗ ${url} -> ${e.message}`);
+      console.warn(`✗  ${url}\n   ${e.message}`);
       fail++;
     }
   }
-  console.log(`\nPronto. ${ok} migrados, ${fail} falhas.`);
-  console.log("Revise os .mdx em src/content/blog/ — especialmente os 'roundup' (preencher products[]).");
+
+  console.log(`\n─────────────────────────────────`);
+  console.log(`Concluído: ${ok} ok, ${fail} falhas`);
+  if (ok > 0) {
+    console.log(`\nPróximos passos:`);
+    console.log(`  1. npm run dev  →  confira no navegador`);
+    console.log(`  2. git add -A && git commit -m "migração 109 posts" && git push`);
+  }
 }
 
 main();
