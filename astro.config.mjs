@@ -14,6 +14,7 @@ import cloudflare from "@astrojs/cloudflare";
 // github.com/withastro/astro/issues/16542).
 export default defineConfig({
   site: "https://www.azpetshop.com.br",
+  trailingSlash: "always",
   integrations: [mdx(), sitemap()],
   adapter: cloudflare(),
 });

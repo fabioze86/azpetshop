@@ -3,6 +3,8 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import PickBox from "../../../components/PickBox.astro";
 import ComparisonTable from "../../../components/ComparisonTable.astro";
+import QuickSummary from "../../../components/QuickSummary.astro";
+import ProductHighlight from "../../../components/ProductHighlight.astro";
 import { labelFor } from "../../../lib/categories";
 
 export async function getStaticPaths() {
@@ -55,7 +57,7 @@ const fmt = (date: Date) =>
 
     <!-- Corpo do artigo -->
     <div class="prose prose-lg mt-6 max-w-none">
-      <Content />
+      <Content components={{ QuickSummary, ProductHighlight }} />
     </div>
 
     <!-- Blocos "Nossa escolha" a partir do frontmatter -->

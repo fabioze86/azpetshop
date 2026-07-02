@@ -1,0 +1,33 @@
+---
+interface Item {
+  label: string;
+  name: string;
+  anchor: string;
+}
+interface Props {
+  title?: string;
+  items: Item[];
+}
+const { title = "Nossas Escolhas", items } = Astro.props;
+---
+
+<div class="not-prose my-8 rounded-2xl border-2 border-cyan bg-mist p-6 md:p-8">
+  <h2 class="text-xl font-extrabold text-navy md:text-2xl">{title}</h2>
+  <div class="mt-2 h-1 w-16 rounded-full bg-orange"></div>
+
+  <div class="mt-6 grid gap-6 sm:grid-cols-3">
+    {
+      items.map((item) => (
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-orange">
+            {item.label}
+          </span>
+          <span class="font-bold text-navy">{item.name}</span>
+          <a href={item.anchor} class="text-sm font-bold text-cyan hover:text-cyan/80">
+            Ir para a análise ↓
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</div>

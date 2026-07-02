@@ -1,0 +1,60 @@
+---
+interface Props {
+  badge?: string;
+  name: string;
+  image: string;
+  imageAlt?: string;
+  href: string;
+  ctaLabel?: string;
+  stars?: number;
+  score?: string;
+  id?: string;
+}
+
+const {
+  badge = "A Nossa Escolha",
+  name,
+  image,
+  imageAlt = name,
+  href,
+  ctaLabel = "Encontre a Melhor Oferta Aqui",
+  stars = 5,
+  score,
+  id,
+} = Astro.props;
+
+const filledStars = "⭐".repeat(Math.max(0, Math.min(5, stars)));
+---
+
+<div id={id} class="not-prose my-8 scroll-mt-24 rounded-2xl border-2 border-cyan bg-paper p-6 shadow-sm md:p-8">
+  <span class="inline-block rounded-full bg-cyan px-4 py-1.5 text-xs font-extrabold uppercase tracking-wider text-white">
+    {badge}
+  </span>
+
+  <div class="mt-5 grid gap-6 md:grid-cols-[220px_1fr] md:items-center">
+    <div class="flex items-center justify-center">
+      <img src={image} alt={imageAlt} loading="lazy" class="max-h-56 w-auto rounded-xl object-contain" />
+    </div>
+    <div>
+      <h3 class="text-xl font-extrabold text-navy md:text-2xl">{name}</h3>
+      <div class="mt-3 text-sm leading-relaxed text-ink/80">
+        <slot />
+      </div>
+      {
+        score && (
+          <p class="mt-4 font-bold text-navy">
+            Avaliação: <span aria-hidden="true">{filledStars}</span> ({score})
+          </p>
+        )
+      }
+      <a
+        href={href}
+        target="_blank"
+        rel="sponsored nofollow noopener"
+        class="mt-5 flex w-full items-center justify-center rounded-full bg-orange px-6 py-3 text-center text-base font-extrabold text-white shadow-sm transition-colors hover:bg-orange/90"
+      >
+        {ctaLabel}
+      </a>
+    </div>
+  </div>
+</div>
