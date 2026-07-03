@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manual — Upload de Imagens · AZ Pet Shop</title>
+<style>
+  :root {
+    --ink: #1f2a24;
+    --ink-soft: #4b5850;
+    --paper: #f4f6f1;
+    --paper-raised: #ffffff;
+    --accent: #b56a1f;
+    --accent-ink: #7a4614;
+    --accent-soft: #efdcb8;
+    --code-bg: #20262b;
+    --code-text: #d8e0d6;
+    --code-prompt: #e8a355;
+    --rule: #dbe3d7;
+    --success: #3f8259;
+    --danger: #a8422f;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --font-body: Optima, "Segoe UI", "Century Gothic", system-ui, -apple-system, sans-serif;
+    --font-mono: "Cascadia Code", "SF Mono", Consolas, Menlo, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { color-scheme: light; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent-ink); }
+  a:hover { color: var(--accent); }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  code, kbd {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  /* ---------- shell layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 2.5rem 1.5rem 2rem 2rem;
+    border-right: 1px solid var(--rule);
+  }
+
+  .toc-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.9rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .toc a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    display: block;
+    border-left: 2px solid transparent;
+    padding-left: 0.7rem;
+  }
+
+  .toc a:hover { color: var(--ink); border-left-color: var(--accent-soft); }
+
+  .toc-badge {
+    margin-top: 1.75rem;
+    padding: 0.85rem 0.9rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .toc-badge strong { color: var(--ink); display: block; margin-bottom: 0.2rem; }
+
+  main {
+    padding: 2.5rem clamp(1.25rem, 4vw, 4rem) 6rem;
+    min-width: 0;
+  }
+
+  header.hero {
+    max-width: 62ch;
+    margin-bottom: 2.75rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 0.6rem;
+  }
+
+  header.hero h1 {
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    margin: 0 0 0.6rem;
+    line-height: 1.15;
+  }
+
+  header.hero p.lede {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 58ch;
+  }
+
+  section {
+    max-width: 68ch;
+    margin: 3.5rem 0;
+    padding-top: 2.25rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  section:first-of-type { border-top: none; padding-top: 0; }
+
+  section h2 {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+  }
+
+  section .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.35rem;
+  }
+
+  p { margin: 0 0 1rem; }
+  p.tight { margin-bottom: 0.5rem; }
+
+  ul, ol.steps { padding-left: 1.3rem; margin: 0 0 1rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* ---------- pipeline diagram ---------- */
+
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 0 0 2.75rem;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .pipeline-step {
+    flex: 1 1 0;
+    min-width: 132px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0 1.1rem;
+  }
+
+  .pipeline-step .num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent-ink);
+    letter-spacing: 0.06em;
+  }
+
+  .pipeline-step .name {
+    font-weight: 600;
+    font-size: 0.98rem;
+    line-height: 1.3;
+  }
+
+  .pipeline-step .detail {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+    line-height: 1.45;
+  }
+
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--accent-soft);
+    font-size: 1.4rem;
+    padding-top: 1.6rem;
+  }
+
+  /* ---------- code blocks ---------- */
+
+  .code-block {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 8px;
+    margin: 0 0 1.35rem;
+    overflow: hidden;
+  }
+
+  .code-block .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .code-block .bar .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(216,224,214,0.55);
+  }
+
+  .copy-btn {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: transparent;
+    border: 1px solid rgba(216,224,214,0.25);
+    color: var(--code-text);
+    padding: 0.25rem 0.6rem;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent-soft); }
+
+  .code-block pre {
+    margin: 0;
+    padding: 1rem 1.1rem 1.15rem;
+    overflow-x: auto;
+    color: var(--code-text);
+    font-family: var(--font-mono);
+    font-size: 0.87rem;
+    line-height: 1.65;
+  }
+
+  .code-block .prompt { color: var(--code-prompt); }
+  .code-block .comment { color: rgba(216,224,214,0.45); }
+  .code-block .out { color: rgba(216,224,214,0.75); }
+
+  /* ---------- callouts ---------- */
+
+  .callout {
+    display: flex;
+    gap: 0.85rem;
+    padding: 1rem 1.15rem;
+    border-radius: 7px;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    margin: 0 0 1.35rem;
+  }
+
+  .callout .tag {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    height: fit-content;
+    white-space: nowrap;
+  }
+
+  .callout.tip { border-color: var(--accent-soft); }
+  .callout.tip .tag { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .callout.warn .tag { background: #f2ddd2; color: var(--danger); }
+  .callout.warn { border-color: #f2ddd2; }
+
+  .callout p { margin: 0; font-size: 0.94rem; }
+
+  /* ---------- scenario cards ---------- */
+
+  .scenario-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .scenario-head .when {
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  ol.steps { list-style: none; padding-left: 0; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.4rem;
+    margin-bottom: 1.5rem;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--paper-raised);
+    border: 1px solid var(--accent-soft);
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps > li .step-title {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    display: block;
+  }
+
+  /* ---------- diff ---------- */
+
+  .frontmatter-diff {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    margin-bottom: 1.35rem;
+    overflow-x: auto;
+  }
+  .frontmatter-diff .before { color: #a8422f; opacity: 0.85; }
+  .frontmatter-diff .before::before { content: "− "; }
+  .frontmatter-diff .after { color: var(--success); }
+  .frontmatter-diff .after::before { content: "+ "; }
+  .frontmatter-diff .ctx { color: var(--ink-soft); }
+  .frontmatter-diff .ctx::before { content: "  "; }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88rem;
+    min-width: 480px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  td code { background: var(--accent-soft); color: var(--accent-ink); padding: 0.05rem 0.35rem; border-radius: 4px; }
+
+  /* ---------- cheat sheet ---------- */
+
+  .cheat {
+    background: var(--ink);
+    border-radius: 10px;
+    padding: 2rem clamp(1.25rem, 4vw, 2.5rem);
+    color: var(--paper);
+  }
+  .cheat h2 { color: var(--paper); }
+  .cheat p { color: rgba(244,246,241,0.72); }
+  .cheat .code-block { background: var(--code-bg); }
+
+  footer {
+    max-width: 68ch;
+    margin: 4rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .toc {
+      position: relative;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 1.5rem 1.25rem;
+    }
+    .toc ol { flex-direction: row; flex-wrap: wrap; gap: 0.4rem 1rem; }
+    .pipeline { flex-direction: column; }
+    .pipeline-arrow { padding-top: 0; padding-left: 1.6rem; transform: rotate(90deg); align-self: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .copy-btn { transition: border-color 0.15s ease, color 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="toc" aria-label="Sumário">
+    <p class="toc-label">Neste manual</p>
+    <ol>
+      <li><a href="#fluxo">Como funciona o fluxo</a></li>
+      <li><a href="#preparo">Antes de começar</a></li>
+      <li><a href="#conceitos">Bucket, key e URL</a></li>
+      <li><a href="#capa">Trocar a capa de um post</a></li>
+      <li><a href="#solta">Subir uma imagem solta</a></li>
+      <li><a href="#flags">Referência de flags</a></li>
+      <li><a href="#nomes">Convenção de pastas</a></li>
+      <li><a href="#erros">Erros comuns</a></li>
+      <li><a href="#cola">Cola rápida</a></li>
+    </ol>
+    <div class="toc-badge">
+      <strong>scripts/upload-image.mjs</strong>
+      Roda uma vez por imagem. Sem servidor, sem login web — usa o wrangler já autenticado na sua máquina.
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Manual interno · AZ Pet Shop</p>
+      <h1>Upload de imagens pro blog</h1>
+      <p class="lede">
+        Guia de referência do <code>scripts/upload-image.mjs</code>: como trocar a foto de capa de um
+        post e como subir fotos soltas (produto, imagem dentro do texto) pro bucket
+        <code>azpetshop-images</code>, servido em <code>cdn.azpetshop.com.br</code>.
+      </p>
+    </header>
+
+    <section id="fluxo">
+      <p class="section-kicker">Visão geral</p>
+      <h2>O caminho que a imagem percorre</h2>
+      <p>
+        Não existe um botão "upload" num site — o script faz os quatro passos abaixo de uma vez,
+        no seu terminal.
+      </p>
+
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <span class="num">01</span>
+          <span class="name">Arquivo no seu PC</span>
+          <span class="detail">rottweiler.jpg</span>
+        </div>
+        <div class="pipeline-arrow" aria-hidden="true">→</div>
+        <div class="pipeline-step">
+          <span class="num">02</span>
+          <span class="name">upload-image.mjs</span>
+          <span class="detail">escolhe a key e chama o wrangler</span>
+        </div>
+        <div class="pipeline-arrow" aria-hidden="true">→</div>
+        <div class="pipeline-step">
+          <span class="num">03</span>
+          <span class="name">Bucket R2</span>
+          <span class="detail">azpetshop-images</span>
+        </div>
+        <div class="pipeline-arrow" aria-hidden="true">→</div>
+        <div class="pipeline-step">
+          <span class="num">04</span>
+          <span class="name">CDN público</span>
+          <span class="detail">cdn.azpetshop.com.br/…</span>
+        </div>
+      </div>
+
+      <p>
+        Se for a <strong>capa</strong> do post, o script ainda faz um quinto passo: reescreve a linha
+        <code>hero:</code> do <code>.mdx</code> pra apontar pra URL nova. Se for uma imagem solta, ele
+        te devolve o link pra você colar onde quiser no texto.
+      </p>
+    </section>
+
+    <section id="preparo">
+      <p class="section-kicker">Preparo</p>
+      <h2>Antes de começar</h2>
+      <ul>
+        <li>Rodar os comandos sempre dentro da pasta do projeto (<code>c:\Projetos\azpetshop</code>).</li>
+        <li>Autenticar o wrangler <strong>uma única vez</strong> por máquina — se já rodou <code>wrangler login</code> antes, pode pular isso.</li>
+        <li>Ter a imagem já no formato final (o script não redimensiona nem comprime — sobe o arquivo como está).</li>
+      </ul>
+
+      <div class="code-block">
+        <div class="bar"><span class="label">Terminal — só na primeira vez</span></div>
+        <pre><span class="prompt">$</span> npx wrangler login
+<span class="comment"># abre o navegador, você confirma o login na Cloudflare, pronto</span></pre>
+      </div>
+
+      <div class="callout tip">
+        <span class="tag">Formatos aceitos</span>
+        <p><code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code>, <code>.gif</code> e <code>.svg</code>. Qualquer outra extensão o script recusa antes de subir.</p>
+      </div>
+    </section>
+
+    <section id="conceitos">
+      <p class="section-kicker">Vocabulário</p>
+      <h2>Bucket, key e URL — o que é cada coisa</h2>
+      <p>Três termos aparecem em toda saída do script. Vale entender pra ler os resultados sem susto:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Termo</th><th>O que é</th><th>Exemplo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Bucket</strong></td>
+              <td>O espaço de armazenamento na nuvem — como uma pasta raiz. Já existe, é sempre o mesmo.</td>
+              <td><code>azpetshop-images</code></td>
+            </tr>
+            <tr>
+              <td><strong>Key</strong></td>
+              <td>O caminho do arquivo dentro do bucket. O script monta essa key pra você.</td>
+              <td><code>posts/caes/rottweiler/hero.jpg</code></td>
+            </tr>
+            <tr>
+              <td><strong>URL pública</strong></td>
+              <td>Bucket + key, servidos pelo domínio que conectamos ao R2. É o que vai no <code>.mdx</code>.</td>
+              <td><code>cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="capa">
+      <div class="scenario-head">
+        <h2>Cenário 1 — Trocar a capa de um post</h2>
+      </div>
+      <p class="when">Quando: você tem uma foto nova pro <code>hero:</code> do post (a imagem grande que aparece no topo e nas listagens).</p>
+
+      <ol class="steps">
+        <li>
+          <span class="step-title">Descubra o "post id" do artigo</span>
+          É <code>categoria/slug</code> — o mesmo caminho da URL do post. Pra
+          <code>src/content/blog/caes/rottweiler.mdx</code>, o id é <code>caes/rottweiler</code>.
+        </li>
+        <li>
+          <span class="step-title">Rode o comando com <code>--hero</code></span>
+          <div class="code-block">
+            <div class="bar">
+              <span class="label">Terminal</span>
+              <button class="copy-btn" data-copy="node scripts/upload-image.mjs --post caes/rottweiler --file ./rottweiler.jpg --hero --alt &quot;Rottweiler deitado no jardim&quot;">Copiar</button>
+            </div>
+            <pre><span class="prompt">$</span> node scripts/upload-image.mjs --post caes/rottweiler --file ./rottweiler.jpg --hero --alt "Rottweiler deitado no jardim"
+
+<span class="out">Subindo ./rottweiler.jpg -&gt; azpetshop-images/posts/caes/rottweiler/hero.jpg ...
+Upload complete.
+
+✅ hero de "caes/rottweiler" atualizado para:
+https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg</span></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-title">Confira o <code>.mdx</code> — já está atualizado</span>
+          O script troca a linha <code>hero:</code> (e cria ou atualiza o <code>heroAlt:</code>, se você passou <code>--alt</code>). Nada mais no arquivo muda.
+          <div class="frontmatter-diff">
+            <div class="ctx">category: "caes"</div>
+            <div class="ctx">type: "guia"</div>
+            <div class="before">hero: "https://www.azpetshop.com.br/img/news/rottweiler_1_600.jpg"</div>
+            <div class="after">hero: "https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg"</div>
+            <div class="after">heroAlt: "Rottweiler deitado no jardim"</div>
+            <div class="ctx">publishedAt: 2026-06-30</div>
+          </div>
+        </li>
+        <li>
+          <span class="step-title">Confira o resultado e suba pro git</span>
+          Rode <code>npm run dev</code> se quiser ver o post localmente antes, depois <code>git add</code> +
+          <code>commit</code> do <code>.mdx</code> como qualquer outra mudança de conteúdo.
+        </li>
+      </ol>
+
+      <div class="callout warn">
+        <span class="tag">Atenção</span>
+        <p>Rodar <code>--hero</code> de novo pro mesmo post sobrescreve o arquivo <code>hero.jpg</code> anterior no bucket — não fica lixo acumulado, mas também não tem "desfazer" além do <code>git checkout</code> no <code>.mdx</code> pra voltar a URL antiga (a imagem antiga só continua acessível se você não tiver sobrescrito a key dela).</p>
+      </div>
+    </section>
+
+    <section id="solta">
+      <div class="scenario-head">
+        <h2>Cenário 2 — Subir uma imagem solta</h2>
+      </div>
+      <p class="when">Quando: foto de um produto recomendado, ou qualquer imagem que vai <em>dentro</em> do corpo do post — não a capa.</p>
+
+      <ol class="steps">
+        <li>
+          <span class="step-title">Rode sem <code>--hero</code>, com um <code>--name</code></span>
+          O <code>--name</code> vira o nome do arquivo lá no bucket — escolha algo que descreva a imagem.
+          <div class="code-block">
+            <div class="bar">
+              <span class="label">Terminal</span>
+              <button class="copy-btn" data-copy="node scripts/upload-image.mjs --post caes/rottweiler --file ./racao-x.jpg --alt &quot;Ração X para cães adultos&quot; --name racao-x">Copiar</button>
+            </div>
+            <pre><span class="prompt">$</span> node scripts/upload-image.mjs --post caes/rottweiler --file ./racao-x.jpg --alt "Ração X para cães adultos" --name racao-x
+
+<span class="out">Subindo ./racao-x.jpg -&gt; azpetshop-images/posts/caes/rottweiler/racao-x.jpg ...
+Upload complete.
+
+✅ Upload concluído: https://cdn.azpetshop.com.br/posts/caes/rottweiler/racao-x.jpg
+
+Cole isso onde quiser no corpo do post:
+![Ração X para cães adultos](https://cdn.azpetshop.com.br/posts/caes/rottweiler/racao-x.jpg)</span></pre>
+          </div>
+        </li>
+        <li>
+          <span class="step-title">Cole a linha final no <code>.mdx</code></span>
+          Abra o arquivo do post e cole o <code>![alt](url)</code> que o script imprimiu, no ponto do texto onde a imagem deve aparecer — igual às fotos de produto que já existem nos posts de comparativo (tipo <code>melhores-antipulgas-cachorros.mdx</code>).
+        </li>
+        <li>
+          <span class="step-title">Sem <code>--name</code>?</span>
+          O script usa o nome do arquivo original, convertido pra minúsculo e sem espaços/acentos — funciona, mas um nome escolhido por você fica mais fácil de reconhecer depois.
+        </li>
+      </ol>
+    </section>
+
+    <section id="flags">
+      <p class="section-kicker">Referência</p>
+      <h2>Todas as flags</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Obrigatória</th><th>O que faz</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--post</code></td><td>Sim</td><td>Id do post — <code>categoria/slug</code>, igual ao caminho do arquivo em <code>src/content/blog</code>.</td></tr>
+            <tr><td><code>--file</code></td><td>Sim</td><td>Caminho da imagem no seu computador.</td></tr>
+            <tr><td><code>--hero</code></td><td>Não</td><td>Marca esta imagem como a capa do post e atualiza o <code>hero:</code> no <code>.mdx</code> automaticamente.</td></tr>
+            <tr><td><code>--alt</code></td><td>Recomendada</td><td>Texto alternativo — vira <code>heroAlt:</code> (no modo capa) ou o texto do Markdown <code>![alt](url)</code> (no modo solto).</td></tr>
+            <tr><td><code>--name</code></td><td>Não</td><td>Nome do arquivo no bucket, sem extensão. Ignorada no modo <code>--hero</code> (que sempre usa <code>hero</code>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="nomes">
+      <p class="section-kicker">Organização</p>
+      <h2>Convenção de pastas no bucket</h2>
+      <p>O script já monta isso sozinho — mas ajuda saber o padrão pra reconhecer as keys depois:</p>
+      <div class="code-block">
+        <div class="bar"><span class="label">Estrutura</span></div>
+        <pre>posts/&lt;categoria&gt;/&lt;slug&gt;/hero.jpg       <span class="comment"># capa do post</span>
+posts/&lt;categoria&gt;/&lt;slug&gt;/&lt;nome&gt;.jpg     <span class="comment"># imagens soltas do mesmo post</span></pre>
+      </div>
+      <p>Assim todas as imagens de um post ficam juntas, e o nome da categoria/slug já entrega de qual artigo é cada foto sem precisar abrir o bucket pra descobrir.</p>
+    </section>
+
+    <section id="erros">
+      <p class="section-kicker">Quando algo dá errado</p>
+      <h2>Erros comuns</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Mensagem</th><th>Causa</th><th>Como resolver</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>post não encontrado: …</code></td>
+              <td>O valor de <code>--post</code> não bate com nenhum arquivo em <code>src/content/blog</code>.</td>
+              <td>Confira categoria e slug exatos — sem <code>.mdx</code> no final, sem barra no começo.</td>
+            </tr>
+            <tr>
+              <td><code>extensão não suportada</code></td>
+              <td>O arquivo em <code>--file</code> não é <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code>, <code>.gif</code> ou <code>.svg</code>.</td>
+              <td>Converta a imagem pra um desses formatos antes de subir.</td>
+            </tr>
+            <tr>
+              <td><code>You are not authenticated</code></td>
+              <td>O wrangler nunca fez login nesta máquina, ou o login expirou.</td>
+              <td>Rode <code>npx wrangler login</code> de novo e repita o upload.</td>
+            </tr>
+            <tr>
+              <td>Comando trava ou não abre navegador</td>
+              <td>Acontece só no <code>wrangler login</code>, não no upload em si.</td>
+              <td>Copie o link impresso no terminal e abra manualmente no navegador.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cola" class="cheat">
+      <p class="section-kicker" style="color: rgba(244,246,241,0.55);">Cola rápida</p>
+      <h2>Os dois comandos, prontos pra editar</h2>
+      <p>Troque <code>caes/rottweiler</code>, o caminho do arquivo e o texto alternativo pelos seus dados.</p>
+
+      <div class="code-block">
+        <div class="bar">
+          <span class="label">Capa do post</span>
+          <button class="copy-btn" data-copy="node scripts/upload-image.mjs --post caes/rottweiler --file ./foto.jpg --hero --alt &quot;descrição da foto&quot;">Copiar</button>
+        </div>
+        <pre><span class="prompt">$</span> node scripts/upload-image.mjs --post caes/rottweiler --file ./foto.jpg --hero --alt "descrição da foto"</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="bar">
+          <span class="label">Imagem solta</span>
+          <button class="copy-btn" data-copy="node scripts/upload-image.mjs --post caes/rottweiler --file ./foto.jpg --alt &quot;descrição da foto&quot; --name nome-da-imagem">Copiar</button>
+        </div>
+        <pre><span class="prompt">$</span> node scripts/upload-image.mjs --post caes/rottweiler --file ./foto.jpg --alt "descrição da foto" --name nome-da-imagem</pre>
+      </div>
+    </section>
+
+    <footer>
+      Script: <code>scripts/upload-image.mjs</code> · Bucket: <code>azpetshop-images</code> · CDN: <code>cdn.azpetshop.com.br</code>
+    </footer>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.getAttribute("data-copy");
+      navigator.clipboard.writeText(text).then(function () {
+        var original = btn.textContent;
+        btn.textContent = "Copiado!";
+        setTimeout(function () { btn.textContent = original; }, 1600);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

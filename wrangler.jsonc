@@ -8,6 +8,12 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	"r2_buckets": [
+		{
+			"bucket_name": "azpetshop-images",
+			"binding": "IMAGES"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}
