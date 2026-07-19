@@ -405,7 +405,7 @@ Modificar o bloco `"scripts"` em `package.json` (`package.json:5-12`) adicionand
     "upload-image": "node scripts/upload-image.mjs",
     "generate-types": "wrangler types",
     "admin": "node scripts/admin/server.mjs",
-    "test:admin": "node --test scripts/admin/lib"
+    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs"
   },
 ```
 
@@ -492,7 +492,7 @@ app.listen(PORT, () => {
 - [ ] **Step 4: Rodar os testes da Task 1 e 2 pra garantir que nada quebrou**
 
 Run: `npm run test:admin`
-Expected: PASS — 8 testes no total (4 de `posts.test.mjs` + 4 de `upload.test.mjs`), 0 falhas.
+Expected: PASS — 9 testes no total (4 de `posts.test.mjs` + 5 de `upload.test.mjs`), 0 falhas.
 
 - [ ] **Step 5: Verificação manual das rotas de posts (sem depender do frontend ainda)**
 
@@ -817,7 +817,7 @@ Encerrar `npm run dev` (Ctrl+C).
 - [ ] **Step 4: Rodar toda a suíte de testes automatizados uma última vez**
 
 Run: `npm run test:admin`
-Expected: PASS — 8 testes, 0 falhas.
+Expected: PASS — 9 testes, 0 falhas.
 
 - [ ] **Step 5: Revisar o estado do git antes de finalizar**
 
