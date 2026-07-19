@@ -1,4 +1,4 @@
-import { execSync as defaultExecSync } from "node:child_process";
+import { execFileSync as defaultExecFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,13 +37,12 @@ export function buildCdnUrl(key) {
   return `${CDN}/${key}`;
 }
 
-export function uploadFile({ category, slug, filename, filePath, contentType, execSync = defaultExecSync }) {
+export function uploadFile({ category, slug, filename, filePath, contentType, execFileSync = defaultExecFileSync }) {
   const key = buildKey(category, slug, filename);
-  const quote = (s) => `"${String(s).replace(/"/g, '\\"')}"`;
-  const cmd = [
-    quote(WRANGLER), "r2", "object", "put", `${BUCKET}/${key}`,
-    "--file", quote(filePath), "--content-type", contentType, "--remote", "-y",
-  ].join(" ");
-  execSync(cmd, { cwd: ROOT, stdio: "inherit" });
+  execFileSync(
+    WRANGLER,
+    ["r2", "object", "put", `${BUCKET}/${key}`, "--file", filePath, "--content-type", contentType, "--remote", "-y"],
+    { cwd: ROOT, stdio: "inherit" },
+  );
   return buildCdnUrl(key);
 }

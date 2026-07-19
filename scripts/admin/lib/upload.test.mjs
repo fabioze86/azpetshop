@@ -19,10 +19,10 @@ test("buildKey e buildCdnUrl montam o caminho esperado", () => {
   assert.equal(buildCdnUrl(key), "https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg");
 });
 
-test("uploadFile monta o comando do wrangler e devolve a URL do CDN", () => {
+test("uploadFile invoca o wrangler com os argumentos corretos e devolve a URL do CDN", () => {
   const calls = [];
-  const fakeExecSync = (cmd, opts) => {
-    calls.push({ cmd, opts });
+  const fakeExecFileSync = (file, args, opts) => {
+    calls.push({ file, args, opts });
   };
   const url = uploadFile({
     category: "caes",
@@ -30,10 +30,28 @@ test("uploadFile monta o comando do wrangler e devolve a URL do CDN", () => {
     filename: "hero.jpg",
     filePath: "/tmp/fake.jpg",
     contentType: "image/jpeg",
-    execSync: fakeExecSync,
+    execFileSync: fakeExecFileSync,
   });
   assert.equal(url, "https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg");
   assert.equal(calls.length, 1);
-  assert.match(calls[0].cmd, /r2 object put/);
-  assert.match(calls[0].cmd, /azpetshop-images\/posts\/caes\/rottweiler\/hero\.jpg/);
+  assert.deepEqual(calls[0].args, [
+    "r2", "object", "put", "azpetshop-images/posts/caes/rottweiler/hero.jpg",
+    "--file", "/tmp/fake.jpg", "--content-type", "image/jpeg", "--remote", "-y",
+  ]);
+});
+
+test("uploadFile passa valores com caracteres especiais como um único argumento literal (sem interpretação de shell)", () => {
+  const calls = [];
+  const fakeExecFileSync = (file, args) => {
+    calls.push({ file, args });
+  };
+  uploadFile({
+    category: "caes; rm -rf /",
+    slug: "rottweiler",
+    filename: "hero.jpg",
+    filePath: "/tmp/fake.jpg",
+    contentType: "image/jpeg",
+    execFileSync: fakeExecFileSync,
+  });
+  assert.equal(calls[0].args[3], "azpetshop-images/posts/caes; rm -rf //rottweiler/hero.jpg");
 });
