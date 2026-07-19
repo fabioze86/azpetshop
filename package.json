@@ -8,7 +8,9 @@
     "preview": "astro preview",
     "migrate": "node scripts/migrate.mjs",
     "upload-image": "node scripts/upload-image.mjs",
-    "generate-types": "wrangler types"
+    "generate-types": "wrangler types",
+    "admin": "node scripts/admin/server.mjs",
+    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
@@ -23,8 +25,10 @@
   },
   "devDependencies": {
     "cheerio": "^1.0.0",
+    "express": "^5.2.1",
     "gray-matter": "^4.0.3",
     "marked": "^18.0.6",
+    "multer": "^2.2.0",
     "turndown": "^7.2.0"
   },
   "overrides": {
