@@ -1,0 +1,35 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #1a1a1a;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+input[type="text"], textarea {
+  width: 100%;
+  padding: 0.4rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 1rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+#status, #upload-status {
+  color: #555;
+}

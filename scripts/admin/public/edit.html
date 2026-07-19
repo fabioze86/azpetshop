@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Editar post — AZ Pet Shop Blog</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+</head>
+<body>
+  <p><a href="/">&larr; voltar para a lista</a></p>
+  <p id="status"></p>
+  <form id="edit-form">
+    <p>Categoria: <strong id="category-label"></strong> (não editável)</p>
+    <label>Título<br /><input type="text" id="title" required /></label>
+    <label>Excerpt<br /><textarea id="excerpt" rows="3" required></textarea></label>
+    <label>Capa (URL)<br /><input type="text" id="hero" /></label>
+    <label>Texto alternativo da capa<br /><input type="text" id="heroAlt" /></label>
+
+    <label>Upload de imagem<br />
+      <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
+    </label>
+    <label><input type="checkbox" id="use-as-hero" /> Usar como capa</label>
+    <button type="button" id="upload-btn">Enviar imagem</button>
+    <span id="upload-status"></span>
+
+    <div id="editor" style="height: 400px; margin: 1rem 0;"></div>
+
+    <button type="submit">Salvar</button>
+  </form>
+  <script src="/edit.js"></script>
+</body>
+</html>
