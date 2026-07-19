@@ -19,6 +19,10 @@ app.use(express.static(join(ADMIN_DIR, "public")));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+function isValidSegment(value) {
+  return typeof value === "string" && /^[a-z0-9-]+$/.test(value);
+}
+
 app.get("/api/posts", async (req, res) => {
   try {
     res.json(await listPosts(BLOG_DIR));
@@ -28,6 +32,9 @@ app.get("/api/posts", async (req, res) => {
 });
 
 app.get("/api/posts/:category/:slug", async (req, res) => {
+  if (!isValidSegment(req.params.category) || !isValidSegment(req.params.slug)) {
+    return res.status(400).json({ error: "categoria ou slug inválidos" });
+  }
   try {
     res.json(await readPost(BLOG_DIR, req.params.category, req.params.slug));
   } catch (err) {
@@ -37,6 +44,9 @@ app.get("/api/posts/:category/:slug", async (req, res) => {
 });
 
 app.put("/api/posts/:category/:slug", async (req, res) => {
+  if (!isValidSegment(req.params.category) || !isValidSegment(req.params.slug)) {
+    return res.status(400).json({ error: "categoria ou slug inválidos" });
+  }
   try {
     const { title, excerpt, hero, heroAlt, contentHtml } = req.body;
     await writePost(BLOG_DIR, req.params.category, req.params.slug, { title, excerpt, hero, heroAlt, contentHtml });
@@ -50,6 +60,9 @@ app.put("/api/posts/:category/:slug", async (req, res) => {
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   const { category, slug, asHero } = req.body;
   if (!category || !slug) return res.status(400).json({ error: "category e slug são obrigatórios" });
+  if (!isValidSegment(category) || !isValidSegment(slug)) {
+    return res.status(400).json({ error: "categoria ou slug inválidos" });
+  }
   if (!req.file) return res.status(400).json({ error: "nenhum arquivo enviado" });
 
   const ext = extname(req.file.originalname).toLowerCase();
