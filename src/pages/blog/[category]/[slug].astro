@@ -5,6 +5,7 @@ import PickBox from "../../../components/PickBox.astro";
 import ComparisonTable from "../../../components/ComparisonTable.astro";
 import QuickSummary from "../../../components/QuickSummary.astro";
 import ProductHighlight from "../../../components/ProductHighlight.astro";
+import Faq from "../../../components/Faq.astro";
 import { labelFor } from "../../../lib/categories";
 
 export async function getStaticPaths() {
@@ -57,7 +58,7 @@ const fmt = (date: Date) =>
 
     <!-- Corpo do artigo -->
     <div class="prose prose-lg mt-6 max-w-none">
-      <Content components={{ QuickSummary, ProductHighlight }} />
+      <Content components={{ QuickSummary, ProductHighlight, Faq }} />
     </div>
 
     <!-- Blocos "Nossa escolha" a partir do frontmatter -->
