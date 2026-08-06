@@ -10,7 +10,13 @@
     "upload-image": "node scripts/upload-image.mjs",
     "generate-types": "wrangler types",
     "admin": "node scripts/admin/server.mjs",
-    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs"
+    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs",
+    "content:pautas:sync": "tsx content-hub/scripts/pautas-sync.ts",
+    "content:candidatos": "tsx content-hub/scripts/candidatos.ts",
+    "content:pesquisa": "tsx content-hub/scripts/pesquisa.ts",
+    "content:escrever": "tsx content-hub/scripts/escrever.ts",
+    "content:revisar": "tsx content-hub/scripts/revisar.ts",
+    "test:content-hub": "tsx --test \"content-hub/**/*.test.ts\""
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
@@ -24,12 +30,15 @@
     "wrangler": "^4.101.0"
   },
   "devDependencies": {
+    "@google/genai": "^2.15.0",
     "cheerio": "^1.0.0",
     "express": "^5.2.1",
     "gray-matter": "^4.0.3",
     "marked": "^18.0.6",
     "multer": "^2.2.0",
-    "turndown": "^7.2.0"
+    "tsx": "^4.23.5",
+    "turndown": "^7.2.0",
+    "zod": "^3.25.76"
   },
   "overrides": {
     "vite": "^7"
