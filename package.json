@@ -10,7 +10,13 @@
     "upload-image": "node scripts/upload-image.mjs",
     "generate-types": "wrangler types",
     "admin": "node scripts/admin/server.mjs",
-    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs"
+    "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs",
+    "content:pautas:sync": "tsx content-hub/scripts/pautas-sync.ts",
+    "content:candidatos": "tsx content-hub/scripts/candidatos.ts",
+    "content:pesquisa": "tsx content-hub/scripts/pesquisa.ts",
+    "content:escrever": "tsx content-hub/scripts/escrever.ts",
+    "content:revisar": "tsx content-hub/scripts/revisar.ts",
+    "test:content-hub": "tsx --test \"content-hub/**/*.test.ts\""
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
