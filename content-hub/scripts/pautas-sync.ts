@@ -1,5 +1,6 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseCsvRecords } from "../lib/csv.ts";
 import { PautaSchema, type Pauta } from "../lib/schemas.ts";
 import { pautaJsonPath, REPO_ROOT } from "../lib/paths.ts";
@@ -28,7 +29,9 @@ async function main() {
   console.log(`✅ ${pautas.length} pauta(s) sincronizada(s) a partir de ${csvPath}`);
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  });
+}

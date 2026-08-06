@@ -67,11 +67,27 @@ test("DossiesSchema aceita um dossiê completo", () => {
   assert.equal(dossies[0].specs.length, 1);
 });
 
-test("EscritaResponseSchema rejeita title fora do range de tamanho", () => {
+test("EscritaResponseSchema aceita title/excerpt fora dos ranges ideais (validação de tamanho é responsabilidade do checklist advisório)", () => {
+  const resultado = EscritaResponseSchema.parse({
+    title: "curto",
+    excerpt: "x".repeat(220),
+    body: "conteúdo",
+  });
+  assert.equal(resultado.title, "curto");
+});
+
+test("EscritaResponseSchema rejeita title/excerpt vazios", () => {
   assert.throws(() =>
     EscritaResponseSchema.parse({
-      title: "curto",
+      title: "",
       excerpt: "x".repeat(120),
+      body: "conteúdo",
+    }),
+  );
+  assert.throws(() =>
+    EscritaResponseSchema.parse({
+      title: "Um título válido",
+      excerpt: "",
       body: "conteúdo",
     }),
   );

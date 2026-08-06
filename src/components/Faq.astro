@@ -22,18 +22,24 @@ const jsonLd = {
 };
 ---
 
-<div class="not-prose my-8 rounded-2xl border-2 border-cyan bg-mist p-6 md:p-8">
-  <h2 class="text-xl font-extrabold text-navy md:text-2xl">Perguntas Frequentes</h2>
-  <div class="mt-4 space-y-3">
-    {
-      items.map((item) => (
-        <details class="rounded-xl border border-line bg-paper p-4">
-          <summary class="cursor-pointer font-bold text-navy">{item.question}</summary>
-          <p class="mt-2 text-sm leading-relaxed text-ink/80">{item.answer}</p>
-        </details>
-      ))
-    }
-  </div>
-</div>
+{
+  items.length > 0 && (
+    <>
+      <div class="not-prose my-8 rounded-2xl border-2 border-cyan bg-mist p-6 md:p-8">
+        <h2 class="text-xl font-extrabold text-navy md:text-2xl">Perguntas Frequentes</h2>
+        <div class="mt-4 space-y-3">
+          {
+            items.map((item) => (
+              <details class="rounded-xl border border-line bg-paper p-4">
+                <summary class="cursor-pointer font-bold text-navy">{item.question}</summary>
+                <p class="mt-2 text-sm leading-relaxed text-ink/80">{item.answer}</p>
+              </details>
+            ))
+          }
+        </div>
+      </div>
 
-<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, "\\u003c")} />
+    </>
+  )
+}

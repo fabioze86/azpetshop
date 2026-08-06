@@ -46,8 +46,8 @@ export type Dossie = z.infer<typeof DossieSchema>;
 export const DossiesSchema = z.array(DossieSchema).min(1);
 
 export const EscritaResponseSchema = z.object({
-  title: z.string().min(10).max(70),
-  excerpt: z.string().min(50).max(170),
+  title: z.string().min(1),
+  excerpt: z.string().min(1),
   body: z.string().min(1),
 });
 export type EscritaResponse = z.infer<typeof EscritaResponseSchema>;

@@ -35,8 +35,18 @@ test("buildProducts mapeia selecionados + dossies pro schema de produtos do Astr
       pros: ["Boa palatabilidade"],
       cons: ["Embalagem frágil"],
       verdict: "Melhor custo-benefício",
+      price: "R$ 150 a R$ 190",
+      badge: "Melhor custo-benefício",
     },
   ]);
+});
+
+test("buildProducts popula image a partir do array de imagens, casando por nome", () => {
+  const imagens = [{ nome: "Ração X", url: "https://cdn.azpetshop.com.br/posts/caes/x/racao-x.jpg" }];
+  const produtos = buildProducts(selecionados, dossies, imagens);
+  assert.equal(produtos[0].image, "https://cdn.azpetshop.com.br/posts/caes/x/racao-x.jpg");
+  assert.equal(produtos[0].price, "R$ 150 a R$ 190");
+  assert.equal(produtos[0].badge, "Melhor custo-benefício");
 });
 
 test("buildFrontmatter monta os campos exatos do schema de content collections", () => {
@@ -49,6 +59,7 @@ test("buildFrontmatter monta os campos exatos do schema de content collections",
     publishedAt,
     produtos: selecionados,
     dossies,
+    imagens: [{ nome: "Ração X", url: "https://cdn.azpetshop.com.br/posts/caes/x/racao-x.jpg" }],
   });
 
   assert.equal(fm.category, "caes");
@@ -56,7 +67,8 @@ test("buildFrontmatter monta os campos exatos do schema de content collections",
   assert.equal(fm.draft, true);
   assert.equal(fm.author, "Equipe AZ Pet Shop");
   assert.equal(fm.publishedAt, publishedAt);
-  assert.equal(fm.products.length, 1);
+  assert.equal((fm.products as unknown[]).length, 1);
+  assert.equal((fm.products as { image?: string }[])[0].image, "https://cdn.azpetshop.com.br/posts/caes/x/racao-x.jpg");
 });
 
 test("assembleMdx gera um MDX cujo frontmatter é lido de volta pelo gray-matter", () => {

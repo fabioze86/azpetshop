@@ -51,6 +51,7 @@ async function main() {
     publishedAt: new Date(),
     produtos: selecionados,
     dossies,
+    imagens,
   });
   const mdx = assembleMdx(frontmatter, resultado.body);
 
@@ -60,7 +61,7 @@ async function main() {
   console.log(`✅ Artigo gerado em ${targetPath} (draft: true — revise antes de publicar)`);
   console.log(`\nLembrete: faça upload das imagens reais dos produtos com:`);
   for (const img of imagens) {
-    const fileName = img.url.split("/").pop();
+    const fileName = img.url.split("/").pop()?.replace(/\.jpg$/, "");
     console.log(
       `  npm run upload-image -- --post ${pauta.categoria}/${slug} --file <arquivo-local> --alt "${img.nome}" --name "${fileName}"`,
     );
