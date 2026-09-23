@@ -8,6 +8,7 @@ import ProductHighlight from "../../../components/ProductHighlight.astro";
 import Faq from "../../../components/Faq.astro";
 import ArticleJsonLd from "../../../components/ArticleJsonLd.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import RelatedPosts from "../../../components/RelatedPosts.astro";
 import { labelFor } from "../../../lib/categories";
 
 export async function getStaticPaths() {
@@ -106,5 +107,7 @@ const breadcrumbItems = [
       Transparência: alguns links acima são de afiliados. A AZ Pet Shop pode receber
       comissão por compras realizadas, sem custo adicional para você.
     </p>
+
+    <RelatedPosts category={d.category} currentId={post.id} />
   </article>
 </BaseLayout>
