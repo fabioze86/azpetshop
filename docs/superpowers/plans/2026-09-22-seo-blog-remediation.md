@@ -947,16 +947,15 @@ git commit -m "feat(admin): mostrar contador de caracteres de título e excerpt 
 
 ---
 
-## Task 10: Re-hospedar no CDN as imagens de produto ainda vivas nos posts roundup
+## Task 10: Re-hospedar no CDN as imagens de produto ainda vivas no post de caixas de transporte
 
 **Files:**
 - Modify: `src/content/blog/caes/caixas-de-transporte-para-viagens-de-aviao.mdx`
-- Modify: `src/content/blog/caes/melhores-antipulgas-cachorros.mdx`
 
 **Interfaces:**
 - Nenhuma — mudança de conteúdo (URLs de imagem no corpo do MDX), sem código.
 
-**Contexto:** dos 4 posts "roundup", 2 têm imagens de produto ainda acessíveis mas hotlinkadas de terceiros (Google Docs e sites de concorrentes/varejo). As outras imagens desses mesmos posts (e as 3 do post de tapete higiênico) já retornam 404 e não têm como ser recuperadas agora — ficam na lista de pendências manuais (ver "Pendências que continuam manuais" no fim deste plano).
+**Contexto:** dos 4 posts "roundup", 2 têm imagens de produto ainda acessíveis mas hotlinkadas de terceiros (Google Docs e sites de concorrentes/varejo) — mas só um deles entra nesta task. `melhores-antipulgas-cachorros.mdx` **foi excluído do escopo desta task**: esse post vai ser reescrito em uma iniciativa separada (schema `products[]` com origem own/affiliate/external substituindo as imagens hardcoded no corpo), então re-hospedar as imagens dele agora seria trabalho jogado fora. As outras imagens já mortas (as 3 do post de tapete higiênico, e as do próprio `melhores-antipulgas-cachorros.mdx`) continuam na lista de pendências manuais no fim deste plano.
 
 - [ ] **Step 1: Baixar as imagens ainda vivas**
 
@@ -965,12 +964,8 @@ Run:
 mkdir -p /tmp/roundup-images
 curl -sL -o /tmp/roundup-images/caixa-gulliver-chalesco.jpg "https://lh7-rt.googleusercontent.com/docsz/AD_4nXfY8m9Rgl3jlS8Du5k6TFYfzZExG_dsW4D80vOAeapZlQrzu3LH8TraeTn5GkPgJVD6ykBv1OsLa77ddG0CJZX5xsuRVjvj5K4UsizHFvoj0Ij-4XpQre9Sc-x2eIiW7dP74maDM10-sSWLueipKe39zRft?key=yeKINSXlJck8Ny1LCitKug"
 curl -sL -o /tmp/roundup-images/caixa-cargo-kennel-luxo.jpg "https://lh7-rt.googleusercontent.com/docsz/AD_4nXfD39_YlZd_YHlyueyvaSlBT20O4jIibNiuY6AJuIPcn5Hnc1spoEPh6TgrhVmvmDUwEtkXOyfo0Gh3zA61C9bV99FhMJrg6luDjE280g5u_jZi3gf4arIZ3osgM9oMdEyKSyGsQd5gIvZsAgK-99Sim3-v?key=yeKINSXlJck8Ny1LCitKug"
-curl -sL -o /tmp/roundup-images/bravecto.jpg "https://images.tcdn.com.br/img/img_prod/587393/antipulgas_e_carrapatos_bravecto_caes_de_10_a_20kg_636_1_e794e730367d90b6b03d7a74d38a48d6.jpg"
-curl -sL -o /tmp/roundup-images/advantage-max-3.jpg "https://cobasi.vteximg.com.br/arquivos/ids/951456/antipulgas-advantage-max3-caes-ate-4kg.jpg?v=638134551959570000"
-curl -sL -o /tmp/roundup-images/seresto-collar.jpg "https://m.media-amazon.com/images/I/71ul7uasPQL.jpg"
-curl -sL -o /tmp/roundup-images/nexgard.jpeg "https://images.tcdn.com.br/img/img_prod/699275/antipulgas_e_carrapatos_nexgard_68mg_para_caes_de_10_1_a_25kg_601_1_dca6245473a8055c1aaac0c625d20f47.jpeg"
 ```
-Expected: 6 arquivos em `/tmp/roundup-images/`, nenhum vazio (`ls -la /tmp/roundup-images/`).
+Expected: 2 arquivos em `/tmp/roundup-images/`, nenhum vazio (`ls -la /tmp/roundup-images/`).
 
 - [ ] **Step 2: Subir para o R2 usando o script já existente**
 
@@ -978,14 +973,10 @@ Run:
 ```bash
 node scripts/upload-image.mjs --post caes/caixas-de-transporte-para-viagens-de-aviao --file /tmp/roundup-images/caixa-gulliver-chalesco.jpg --alt "Caixa de Transporte Gulliver da Chalesco" --name caixa-gulliver-chalesco
 node scripts/upload-image.mjs --post caes/caixas-de-transporte-para-viagens-de-aviao --file /tmp/roundup-images/caixa-cargo-kennel-luxo.jpg --alt "Caixa de Transporte Cargo Kennel Luxo" --name caixa-cargo-kennel-luxo
-node scripts/upload-image.mjs --post caes/melhores-antipulgas-cachorros --file /tmp/roundup-images/bravecto.jpg --alt "Bravecto" --name bravecto
-node scripts/upload-image.mjs --post caes/melhores-antipulgas-cachorros --file /tmp/roundup-images/advantage-max-3.jpg --alt "Advantage Max 3" --name advantage-max-3
-node scripts/upload-image.mjs --post caes/melhores-antipulgas-cachorros --file /tmp/roundup-images/seresto-collar.jpg --alt "Seresto Collar" --name seresto-collar
-node scripts/upload-image.mjs --post caes/melhores-antipulgas-cachorros --file /tmp/roundup-images/nexgard.jpeg --alt "NexGard" --name nexgard
 ```
-Expected: cada comando imprime `✅ Upload concluído: https://cdn.azpetshop.com.br/posts/caes/<slug>/<nome>.<ext>` — anote as 6 URLs impressas.
+Expected: cada comando imprime `✅ Upload concluído: https://cdn.azpetshop.com.br/posts/caes/caixas-de-transporte-para-viagens-de-aviao/<nome>.jpg` — anote as 2 URLs impressas.
 
-- [ ] **Step 3: Substituir as URLs no corpo dos 2 posts**
+- [ ] **Step 3: Substituir as URLs no corpo do post**
 
 Em `src/content/blog/caes/caixas-de-transporte-para-viagens-de-aviao.mdx`, troque as duas linhas:
 ```
@@ -1004,51 +995,16 @@ por
 ![Caixa de Transporte Cargo Kennel Luxo](https://cdn.azpetshop.com.br/posts/caes/caixas-de-transporte-para-viagens-de-aviao/caixa-cargo-kennel-luxo.jpg)
 ```
 
-Em `src/content/blog/caes/melhores-antipulgas-cachorros.mdx`, troque:
-```
-![Bravecto](https://images.tcdn.com.br/img/img_prod/587393/antipulgas_e_carrapatos_bravecto_caes_de_10_a_20kg_636_1_e794e730367d90b6b03d7a74d38a48d6.jpg)
-```
-por
-```
-![Bravecto](https://cdn.azpetshop.com.br/posts/caes/melhores-antipulgas-cachorros/bravecto.jpg)
-```
-troque:
-```
-![Advantage Max 3](https://cobasi.vteximg.com.br/arquivos/ids/951456/antipulgas-advantage-max3-caes-ate-4kg.jpg?v=638134551959570000)
-```
-por
-```
-![Advantage Max 3](https://cdn.azpetshop.com.br/posts/caes/melhores-antipulgas-cachorros/advantage-max-3.jpg)
-```
-troque:
-```
-![Seresto Collar](https://m.media-amazon.com/images/I/71ul7uasPQL.jpg)
-```
-por
-```
-![Seresto Collar](https://cdn.azpetshop.com.br/posts/caes/melhores-antipulgas-cachorros/seresto-collar.jpg)
-```
-troque:
-```
-![NexGard](https://images.tcdn.com.br/img/img_prod/699275/antipulgas_e_carrapatos_nexgard_68mg_para_caes_de_10_1_a_25kg_601_1_dca6245473a8055c1aaac0c625d20f47.jpeg)
-```
-por
-```
-![NexGard](https://cdn.azpetshop.com.br/posts/caes/melhores-antipulgas-cachorros/nexgard.jpeg)
-```
-
-(A imagem do "Frontline Plus", nesse mesmo post, já retorna 403 no site de origem — não tem o que baixar; ela entra na lista de pendências manuais no fim deste plano.)
-
 - [ ] **Step 4: Verificar**
 
-Run: `npm run build && npm run preview`, abra os 2 posts e confira que as imagens carregam a partir de `cdn.azpetshop.com.br`.
-Expected: todas as imagens re-hospedadas aparecem corretamente; só a do Frontline Plus continua quebrada (esperado, ver acima).
+Run: `npm run build && npm run preview`, abra o post e confira que as duas imagens carregam a partir de `cdn.azpetshop.com.br`.
+Expected: as 2 imagens re-hospedadas aparecem corretamente.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/content/blog/caes/caixas-de-transporte-para-viagens-de-aviao.mdx src/content/blog/caes/melhores-antipulgas-cachorros.mdx
-git commit -m "fix: re-hospedar no CDN as imagens de produto hotlinkadas de terceiros"
+git add src/content/blog/caes/caixas-de-transporte-para-viagens-de-aviao.mdx
+git commit -m "fix: re-hospedar no CDN as imagens de produto do post de caixas de transporte"
 ```
 
 ---
@@ -1073,6 +1029,7 @@ git commit -m "fix: re-hospedar no CDN as imagens de produto hotlinkadas de terc
 Depois de rodar as Tasks 1–10, a coluna "Pendências de SEO" do admin (`npm run admin`) é a fonte de verdade do que falta. Concretamente:
 
 1. **107 imagens de capa** — subir uma a uma pelo admin (`/edit.html` → campo "Upload de imagem" → marcar "Usar como capa"). Cada upload já atualiza `hero` e você preenche `heroAlt` com uma frase descritiva da foto (não repetir o título).
-2. **4 imagens de produto já mortas** (Frontline Plus no post de antipulgas; as 3 imagens do post de tapete higiênico) — mesma via, usando "Upload de imagem" sem marcar "Usar como capa" e colando a URL retornada no lugar da URL quebrada no corpo.
+2. **4 imagens de produto já mortas** (as 3 imagens do post de tapete higiênico) — mesma via, usando "Upload de imagem" sem marcar "Usar como capa" e colando a URL retornada no lugar da URL quebrada no corpo.
 3. **49 títulos e 54 excerpts fora do range de caracteres** — usar o contador da Task 9 como guia enquanto revisa cada um; é reescrita pontual do título/excerpt, não do corpo do artigo.
 4. **`melhores-camas-de-cachorro.mdx`** não tem nenhuma imagem de produto no corpo (nem antes, nem depois deste plano) — ao subir a capa, vale avaliar se esse post também precisa de fotos dos produtos citados.
+5. **`melhores-antipulgas-cachorros.mdx`** ficou fora da Task 10 de propósito: esse post vai ser reescrito por uma iniciativa separada (schema `products[]` com origem own/affiliate/external), que substitui as imagens hardcoded do corpo por um bloco estruturado. Não mexer nas imagens desse post até essa iniciativa acontecer.
