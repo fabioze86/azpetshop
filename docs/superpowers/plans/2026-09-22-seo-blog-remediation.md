@@ -688,12 +688,19 @@ A correção em si (código + testes) já foi aplicada e revisada; a Task 7 abai
 
 - [ ] **Step 1: Criar o script**
 
+**Importante — não usar `matter.stringify` para regravar o arquivo.** Uma tentativa anterior deste script usava `matter(raw)` pra separar frontmatter/corpo e `matter.stringify(stripped, data)` pra regravar — mas isso reserializa o YAML do zero (troca aspas, quebra strings longas em blocos `>-`, e o pior: reformata datas, transformando `publishedAt: 2026-06-30` em `publishedAt: 2026-06-30T00:00:00.000Z`, uma mudança de dado, não só de estilo). Em vez disso, o script deve separar frontmatter e corpo com uma regex simples e recolar o frontmatter ORIGINAL, byte a byte, intacto — só o corpo passa por `stripDuplicateH1`.
+
 Create `scripts/fix-duplicate-h1.mjs`:
 ```js
 // scripts/fix-duplicate-h1.mjs
-// Remove, nos .mdx existentes, o "# Título" duplicado no corpo quando ele
-// repete exatamente o campo `title` do frontmatter (o layout já renderiza
-// um H1 a partir do título — ter os dois gera dois H1 na mesma página).
+// Remove, nos .mdx existentes, o H1 duplicado no início do corpo (o layout
+// já renderiza um H1 a partir do frontmatter `title` — ter outro H1 logo no
+// começo do corpo gera dois H1 na mesma página).
+//
+// Não usa gray-matter pra regravar o arquivo: só separa o bloco de
+// frontmatter do corpo com uma regex e recola o frontmatter ORIGINAL sem
+// reserializar — matter.stringify() reformata YAML (aspas, datas, quebra de
+// linha em strings longas) e isso não é o objetivo desta correção.
 //
 //   node scripts/fix-duplicate-h1.mjs           <- aplica em tudo
 //   DRY_RUN=1 node scripts/fix-duplicate-h1.mjs  <- só lista o que mudaria
@@ -701,12 +708,12 @@ Create `scripts/fix-duplicate-h1.mjs`:
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
 import { stripDuplicateH1 } from "./admin/lib/posts.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BLOG_DIR = path.join(ROOT, "src", "content", "blog");
 const DRY_RUN = Boolean(process.env.DRY_RUN);
+const FRONTMATTER_RE = /^(---\r?\n[\s\S]*?\r?\n---\r?\n)([\s\S]*)$/;
 
 async function walkMdxFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -725,9 +732,14 @@ async function main() {
 
   for (const file of files) {
     const raw = await readFile(file, "utf8");
-    const { data, content } = matter(raw);
-    const stripped = stripDuplicateH1(content);
-    if (stripped === content) continue;
+    const match = raw.match(FRONTMATTER_RE);
+    if (!match) {
+      console.warn(`aviso: ${path.relative(ROOT, file)} sem bloco de frontmatter reconhecível, pulando`);
+      continue;
+    }
+    const [, frontmatterBlock, body] = match;
+    const stripped = stripDuplicateH1(body);
+    if (stripped === body) continue;
 
     changed++;
     const rel = path.relative(ROOT, file);
@@ -735,8 +747,7 @@ async function main() {
       console.log(`[dry-run] removeria H1 duplicado em ${rel}`);
       continue;
     }
-    const output = matter.stringify(stripped, data);
-    await writeFile(file, output, "utf8");
+    await writeFile(file, frontmatterBlock + stripped, "utf8");
     console.log(`corrigido: ${rel}`);
   }
 
@@ -762,7 +773,7 @@ Expected: `N arquivo(s) alterados de 109 total.`, com o mesmo N do dry-run.
 - [ ] **Step 4: Conferir que nada além do H1 mudou**
 
 Run: `git diff --stat -- src/content/blog`
-Expected: só os N arquivos aparecem, cada um com poucas linhas removidas (a linha do H1 e a linha em branco seguinte) — nenhuma outra edição de conteúdo.
+Expected: só os N arquivos aparecem, e cada um mostra POUCAS linhas alteradas (tipicamente 1-2 remoções — a linha do H1 e a linha em branco seguinte; nunca dezenas de linhas). Se algum arquivo aparecer com muito mais linhas alteradas do que isso, é sinal de que o frontmatter foi reformatado por engano — pare e investigue antes de commitar. Confira também, numa amostra de arquivos, que `publishedAt` no frontmatter continua no formato original (`2026-06-30`, sem virar timestamp ISO completo).
 
 - [ ] **Step 5: Registrar o script em `package.json`**
 
