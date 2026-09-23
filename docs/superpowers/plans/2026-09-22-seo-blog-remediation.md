@@ -659,6 +659,22 @@ git commit -m "feat(admin): sinalizar pendências de SEO por post e remover H1 d
 
 ---
 
+## Addendum à Task 6 (achado durante a execução da Task 7): critério de "H1 duplicado" estava restrito demais
+
+A implementação original da Task 6 (aprovada e commitada) só considerava "H1 duplicado" quando a primeira linha do corpo era **exatamente** `# ${title}` (texto idêntico ao frontmatter). Ao rodar a Task 7 sobre o conteúdo real, o subagente descobriu que os 43 arquivos identificados na auditoria original têm um H1 na primeira linha do corpo, mas em geral **abreviado** em relação ao título completo (ex.: título `"American Bully: Características e Informações sobre a Raça"`, H1 do corpo `"# American Bully"`) — texto diferente, então a comparação exata não disparava (0 arquivos detectados, contra os 43 esperados).
+
+O problema real que a auditoria original apontou não é "o corpo repete o título palavra por palavra" — é "o corpo tem seu próprio `<h1>`, além do `<h1>` que o layout já renderiza a partir do frontmatter `title`, gerando dois H1 na mesma página". Esse problema existe independente do texto do H1 do corpo bater com o título. A regra correta é: **remover a primeira linha do corpo sempre que ela for um H1 markdown (`# ...`), qualquer que seja o texto**, já que o layout sempre renderiza seu próprio H1 logo acima.
+
+Correção aplicada em `stripDuplicateH1` (Task 6, já commitada) antes de rodar a Task 7:
+- Trocar a comparação exata por: primeira linha do corpo (após trim) casa com `/^#\s+/` → remove essa linha (e a linha em branco seguinte).
+- O parâmetro `title` da função deixa de ser necessário para essa checagem; mantido por compatibilidade de assinatura ou removido, a critério de quem aplicar a correção (se removido, atualizar os 2 testes de `stripDuplicateH1` e a chamada em `writePost`).
+- `computeSeoFlags`, flag `h1-duplicado`: mesma mudança de critério (qualquer H1 na primeira linha do corpo, não só o que repete o título).
+- Testes de `posts.test.mjs` que dependiam do texto exato (`"# Rottweiler"` batendo com `title: "Rottweiler"`) continuam válidos (são casos particulares de "primeira linha é H1"); adicionar pelo menos um caso onde o H1 do corpo tem texto diferente do título, pra travar a regra nova.
+
+Depois dessa correção, a Task 7 foi re-executada (ver abaixo) e passou a encontrar os 43 arquivos esperados.
+
+---
+
 ## Task 7: Remover H1 duplicado dos 43 posts existentes (correção retroativa)
 
 **Files:**
