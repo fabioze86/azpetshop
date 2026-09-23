@@ -33,3 +33,7 @@ button {
 #status, #upload-status {
   color: #555;
 }
+.count-warning {
+  color: #b91c1c;
+  font-weight: bold;
+}
