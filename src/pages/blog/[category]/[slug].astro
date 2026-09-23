@@ -70,11 +70,15 @@ const breadcrumbItems = [
 
     {
       d.hero && (
-        <img
-          src={d.hero}
-          alt={d.heroAlt ?? d.title}
-          class="mt-6 w-full rounded-2xl object-cover"
-        />
+        <div class="mt-6 aspect-[16/10] w-full overflow-hidden rounded-2xl bg-mist">
+          <img
+            src={d.hero}
+            alt={d.heroAlt ?? d.title}
+            loading="eager"
+            fetchpriority="high"
+            class="h-full w-full object-cover"
+          />
+        </div>
       )
     }
 
