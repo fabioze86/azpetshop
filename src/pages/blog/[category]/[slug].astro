@@ -6,6 +6,8 @@ import ComparisonTable from "../../../components/ComparisonTable.astro";
 import QuickSummary from "../../../components/QuickSummary.astro";
 import ProductHighlight from "../../../components/ProductHighlight.astro";
 import Faq from "../../../components/Faq.astro";
+import ArticleJsonLd from "../../../components/ArticleJsonLd.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import { labelFor } from "../../../lib/categories";
 
 export async function getStaticPaths() {
@@ -25,13 +27,36 @@ const d = post.data;
 
 const fmt = (date: Date) =>
   date.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const breadcrumbItems = [
+  { name: "Início", url: new URL("/", Astro.site).toString() },
+  { name: "Blog", url: new URL("/blog/", Astro.site).toString() },
+  { name: labelFor(d.category), url: new URL(`/blog/${d.category}/`, Astro.site).toString() },
+  { name: d.title, url: canonicalUrl },
+];
 ---
 
-<BaseLayout title={`${d.title} — AZ Pet Shop`} description={d.excerpt} image={d.hero}>
+<BaseLayout
+  title={`${d.title} — AZ Pet Shop`}
+  description={d.excerpt}
+  image={d.hero}
+  type="article"
+  publishedTime={d.publishedAt}
+  modifiedTime={d.updatedAt}
+>
+  <ArticleJsonLd
+    title={d.title}
+    description={d.excerpt}
+    image={d.hero}
+    url={canonicalUrl}
+    author={d.author}
+    datePublished={d.publishedAt}
+    dateModified={d.updatedAt}
+    breadcrumbs={breadcrumbItems}
+  />
   <article class="mx-auto max-w-3xl px-4 py-10">
-    <a href={`/blog/${d.category}`} class="text-xs font-extrabold uppercase tracking-wider text-pink">
-      {labelFor(d.category)}
-    </a>
+    <Breadcrumbs items={breadcrumbItems} />
     <h1 class="mt-3 text-3xl font-black leading-tight text-navy md:text-4xl">{d.title}</h1>
     <p class="mt-4 text-lg text-ink/75">{d.excerpt}</p>
 
