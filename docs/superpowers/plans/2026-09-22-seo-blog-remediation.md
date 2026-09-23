@@ -677,7 +677,7 @@ A correção em si (código + testes) já foi aplicada e revisada; a Task 7 abai
 
 ---
 
-## Task 7: Remover H1 duplicado dos 43 posts existentes (correção retroativa)
+## Task 7: Remover H1 duplicado dos posts existentes (correção retroativa) — CONCLUÍDA: 42 arquivos corrigidos
 
 **Files:**
 - Create: `scripts/fix-duplicate-h1.mjs`
