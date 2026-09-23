@@ -673,6 +673,8 @@ Correção aplicada em `stripDuplicateH1` (Task 6, já commitada) antes de rodar
 
 A correção em si (código + testes) já foi aplicada e revisada; a Task 7 abaixo ainda precisa ser (re)executada sobre o conteúdo real para confirmar quantos arquivos batem com o critério novo — o número pode não ser exatamente 43 (a auditoria original usou um grep mais permissivo, que casava "# " em qualquer linha do arquivo, não só na primeira linha do corpo).
 
+**Segunda rodada de correção (também achada ao rodar a Task 7):** mesmo com o critério "qualquer H1 na primeira linha", a Task 7 ainda encontrou 0 arquivos. Investigação mostrou que a estrutura real dos posts é diferente: o corpo não começa direto com o H1 — começa com UMA linha de texto solto (sem `#`, repetindo/parafraseando o título, ex.: `"American Bully: Tudo Sobre a Raça"`), depois linha em branco, e só então o H1 real (`# American Bully`). `stripDuplicateH1`/`computeSeoFlags` foram corrigidos de novo para detectar esse padrão (linha de abertura + H1), preservando a linha de abertura intacta (removê-la seria editar redação, fora do escopo do plano). Validado contra os 109 arquivos reais: exatamente 42 batem com o critério final — número confirmado de forma independente tanto pelo implementador quanto pelo revisor da correção.
+
 ---
 
 ## Task 7: Remover H1 duplicado dos 43 posts existentes (correção retroativa)
