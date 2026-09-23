@@ -157,6 +157,54 @@ Corpo do post.
   }
 });
 
+test("stripDuplicateH1 remove o H1 quando ele vem depois de uma linha de abertura, preservando essa linha", () => {
+  // Padrão real encontrado nos 109 arquivos do blog: uma linha de texto solto
+  // (que parafraseia o título, mas não é heading markdown) seguida de um H1
+  // real que duplica o <h1> do layout. Só o H1 (e a linha em branco seguinte)
+  // deve ser removido — a linha de abertura precisa ser preservada intacta.
+  const markdown =
+    "American Bully: Tudo Sobre a Raça\n\n# American Bully\n\nConteúdo real do post.\n";
+  assert.equal(
+    stripDuplicateH1(markdown),
+    "American Bully: Tudo Sobre a Raça\n\nConteúdo real do post.\n",
+  );
+});
+
+test("listPosts sinaliza h1-duplicado quando o H1 vem depois de uma linha de abertura", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
+  try {
+    await mkdir(path.join(dir, "caes"), { recursive: true });
+    await writeFile(
+      path.join(dir, "caes", "american-bully-abertura.mdx"),
+      `---
+title: "American Bully: Características e Informações sobre a Raça"
+excerpt: "Tudo sobre a raça American Bully, temperamento e cuidados"
+category: "caes"
+type: "guia"
+hero: "https://cdn.azpetshop.com.br/posts/caes/american-bully/hero.jpg"
+heroAlt: "American Bully deitado no jardim"
+publishedAt: 2026-01-10
+author: "Equipe AZ Pet Shop"
+draft: false
+products: []
+---
+
+American Bully: Tudo Sobre a Raça
+
+# American Bully
+
+Conteúdo real do post.
+`,
+      "utf8",
+    );
+    const posts = await listPosts(dir);
+    assert.equal(posts.length, 1);
+    assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("listPosts sinaliza h1-duplicado mesmo quando o H1 do corpo tem texto diferente (abreviado) do título", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
   try {
