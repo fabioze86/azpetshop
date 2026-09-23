@@ -106,12 +106,21 @@ test("writePost atualiza campos editáveis e preserva os demais", async () => {
 
 test("stripDuplicateH1 remove o H1 do corpo quando é igual ao título", () => {
   const markdown = "# Rottweiler\n\nUm cão forte e leal.\n";
-  assert.equal(stripDuplicateH1(markdown, "Rottweiler"), "Um cão forte e leal.\n");
+  assert.equal(stripDuplicateH1(markdown), "Um cão forte e leal.\n");
 });
 
-test("stripDuplicateH1 mantém o corpo intacto quando o H1 é diferente do título", () => {
-  const markdown = "# Outro título\n\nConteúdo.\n";
-  assert.equal(stripDuplicateH1(markdown, "Rottweiler"), markdown);
+test("stripDuplicateH1 remove o H1 do corpo mesmo quando o texto é diferente do título (abreviado)", () => {
+  // Caso real encontrado na auditoria: title completo no frontmatter, mas o H1
+  // do corpo usa um texto abreviado. O layout do site já renderiza seu próprio
+  // <h1> a partir do frontmatter, então qualquer H1 na primeira linha do corpo
+  // duplica o heading, independente do texto bater com o título.
+  const markdown = "# American Bully\n\nConteúdo sobre a raça.\n";
+  assert.equal(stripDuplicateH1(markdown), "Conteúdo sobre a raça.\n");
+});
+
+test("stripDuplicateH1 mantém o corpo intacto quando a primeira linha não é um H1", () => {
+  const markdown = "Conteúdo sem heading no início.\n\n## Subtítulo\n";
+  assert.equal(stripDuplicateH1(markdown), markdown);
 });
 
 test("listPosts sinaliza pendências de SEO por post", async () => {
@@ -142,6 +151,39 @@ Corpo do post.
     assert.ok(posts[0].seoFlags.includes("hero-ausente"));
     assert.ok(posts[0].seoFlags.includes("titulo-longo"));
     assert.ok(posts[0].seoFlags.includes("excerpt-fora-do-range"));
+    assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("listPosts sinaliza h1-duplicado mesmo quando o H1 do corpo tem texto diferente (abreviado) do título", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
+  try {
+    await mkdir(path.join(dir, "caes"), { recursive: true });
+    await writeFile(
+      path.join(dir, "caes", "american-bully.mdx"),
+      `---
+title: "American Bully: Características e Informações sobre a Raça"
+excerpt: "Tudo sobre a raça American Bully, temperamento e cuidados"
+category: "caes"
+type: "guia"
+hero: "https://cdn.azpetshop.com.br/posts/caes/american-bully/hero.jpg"
+heroAlt: "American Bully deitado no jardim"
+publishedAt: 2026-01-10
+author: "Equipe AZ Pet Shop"
+draft: false
+products: []
+---
+
+# American Bully
+
+Conteúdo sobre a raça.
+`,
+      "utf8",
+    );
+    const posts = await listPosts(dir);
+    assert.equal(posts.length, 1);
     assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
   } finally {
     await rm(dir, { recursive: true, force: true });
