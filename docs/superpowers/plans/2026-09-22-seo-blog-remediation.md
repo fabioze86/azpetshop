@@ -671,7 +671,7 @@ Correção aplicada em `stripDuplicateH1` (Task 6, já commitada) antes de rodar
 - `computeSeoFlags`, flag `h1-duplicado`: mesma mudança de critério (qualquer H1 na primeira linha do corpo, não só o que repete o título).
 - Testes de `posts.test.mjs` que dependiam do texto exato (`"# Rottweiler"` batendo com `title: "Rottweiler"`) continuam válidos (são casos particulares de "primeira linha é H1"); adicionar pelo menos um caso onde o H1 do corpo tem texto diferente do título, pra travar a regra nova.
 
-Depois dessa correção, a Task 7 foi re-executada (ver abaixo) e passou a encontrar os 43 arquivos esperados.
+A correção em si (código + testes) já foi aplicada e revisada; a Task 7 abaixo ainda precisa ser (re)executada sobre o conteúdo real para confirmar quantos arquivos batem com o critério novo — o número pode não ser exatamente 43 (a auditoria original usou um grep mais permissivo, que casava "# " em qualquer linha do arquivo, não só na primeira linha do corpo).
 
 ---
 
@@ -724,7 +724,7 @@ async function main() {
   for (const file of files) {
     const raw = await readFile(file, "utf8");
     const { data, content } = matter(raw);
-    const stripped = stripDuplicateH1(content, data.title);
+    const stripped = stripDuplicateH1(content);
     if (stripped === content) continue;
 
     changed++;
@@ -750,17 +750,17 @@ main().catch((err) => {
 - [ ] **Step 2: Rodar em modo dry-run e conferir a contagem**
 
 Run: `DRY_RUN=1 node scripts/fix-duplicate-h1.mjs`
-Expected: lista 43 arquivos (o mesmo número encontrado na auditoria) e termina com `43 arquivo(s) seriam alterados de 109 total.`
+Expected: lista os arquivos cuja primeira linha do corpo é um H1 markdown (critério corrigido — não precisa ser exatamente 43; a auditoria original usava um grep mais permissivo) e termina com `N arquivo(s) seriam alterados de 109 total.` Registre o N real no relatório.
 
 - [ ] **Step 3: Aplicar de verdade**
 
 Run: `node scripts/fix-duplicate-h1.mjs`
-Expected: `43 arquivo(s) alterados de 109 total.`
+Expected: `N arquivo(s) alterados de 109 total.`, com o mesmo N do dry-run.
 
 - [ ] **Step 4: Conferir que nada além do H1 mudou**
 
 Run: `git diff --stat -- src/content/blog`
-Expected: só os 43 arquivos aparecem, cada um com poucas linhas removidas (o `# Título` e a linha em branco seguinte) — nenhuma outra edição de conteúdo.
+Expected: só os N arquivos aparecem, cada um com poucas linhas removidas (a linha do H1 e a linha em branco seguinte) — nenhuma outra edição de conteúdo.
 
 - [ ] **Step 5: Registrar o script em `package.json`**
 
