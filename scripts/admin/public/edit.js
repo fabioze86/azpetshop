@@ -7,6 +7,28 @@ document.getElementById("category-label").textContent = category ?? "";
 
 const quill = new Quill("#editor", { theme: "snow" });
 
+const TITLE_SUFFIX = " — AZ Pet Shop";
+const EXCERPT_MIN = 70;
+const EXCERPT_MAX = 160;
+
+function updateTitleCount() {
+  const value = document.getElementById("title").value;
+  const total = value.length + TITLE_SUFFIX.length;
+  const el = document.getElementById("title-count");
+  el.textContent = `${value.length} caracteres (${total} com "${TITLE_SUFFIX.trim()}" — ideal até 60)`;
+  el.classList.toggle("count-warning", total > 60);
+}
+
+function updateExcerptCount() {
+  const value = document.getElementById("excerpt").value;
+  const el = document.getElementById("excerpt-count");
+  el.textContent = `${value.length} caracteres (ideal entre ${EXCERPT_MIN} e ${EXCERPT_MAX})`;
+  el.classList.toggle("count-warning", value.length < EXCERPT_MIN || value.length > EXCERPT_MAX);
+}
+
+document.getElementById("title").addEventListener("input", updateTitleCount);
+document.getElementById("excerpt").addEventListener("input", updateExcerptCount);
+
 async function loadPost() {
   try {
     const res = await fetch(`/api/posts/${encodeURIComponent(category)}/${encodeURIComponent(slug)}`);
@@ -17,6 +39,8 @@ async function loadPost() {
     document.getElementById("hero").value = data.hero ?? "";
     document.getElementById("heroAlt").value = data.heroAlt ?? "";
     quill.root.innerHTML = data.contentHtml ?? "";
+    updateTitleCount();
+    updateExcerptCount();
   } catch (err) {
     statusEl.textContent = `Erro ao carregar post: ${err.message}`;
   }

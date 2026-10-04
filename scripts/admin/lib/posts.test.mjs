@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import matter from "gray-matter";
-import { listPosts, readPost, writePost } from "./posts.mjs";
+import { listPosts, readPost, writePost, stripDuplicateH1 } from "./posts.mjs";
 
 async function makeFixture() {
   const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
@@ -99,6 +99,140 @@ test("writePost atualiza campos editáveis e preserva os demais", async () => {
     assert.equal(data.type, "guia");
     assert.deepEqual(data.products, []);
     assert.ok(data.updatedAt, "updatedAt deveria ter sido adicionado");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("stripDuplicateH1 remove o H1 do corpo quando é igual ao título", () => {
+  const markdown = "# Rottweiler\n\nUm cão forte e leal.\n";
+  assert.equal(stripDuplicateH1(markdown), "Um cão forte e leal.\n");
+});
+
+test("stripDuplicateH1 remove o H1 do corpo mesmo quando o texto é diferente do título (abreviado)", () => {
+  // Caso real encontrado na auditoria: title completo no frontmatter, mas o H1
+  // do corpo usa um texto abreviado. O layout do site já renderiza seu próprio
+  // <h1> a partir do frontmatter, então qualquer H1 na primeira linha do corpo
+  // duplica o heading, independente do texto bater com o título.
+  const markdown = "# American Bully\n\nConteúdo sobre a raça.\n";
+  assert.equal(stripDuplicateH1(markdown), "Conteúdo sobre a raça.\n");
+});
+
+test("stripDuplicateH1 mantém o corpo intacto quando a primeira linha não é um H1", () => {
+  const markdown = "Conteúdo sem heading no início.\n\n## Subtítulo\n";
+  assert.equal(stripDuplicateH1(markdown), markdown);
+});
+
+test("listPosts sinaliza pendências de SEO por post", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
+  try {
+    await mkdir(path.join(dir, "caes"), { recursive: true });
+    await writeFile(
+      path.join(dir, "caes", "sem-capa.mdx"),
+      `---
+title: "Post sem capa e com título bem longo pra estourar o limite de SEO"
+excerpt: "Resumo curto"
+category: "caes"
+type: "guia"
+publishedAt: 2026-01-10
+author: "Equipe AZ Pet Shop"
+draft: false
+products: []
+---
+
+# Post sem capa e com título bem longo pra estourar o limite de SEO
+
+Corpo do post.
+`,
+      "utf8",
+    );
+    const posts = await listPosts(dir);
+    assert.equal(posts.length, 1);
+    assert.ok(posts[0].seoFlags.includes("hero-ausente"));
+    assert.ok(posts[0].seoFlags.includes("titulo-longo"));
+    assert.ok(posts[0].seoFlags.includes("excerpt-fora-do-range"));
+    assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("stripDuplicateH1 remove o H1 quando ele vem depois de uma linha de abertura, preservando essa linha", () => {
+  // Padrão real encontrado nos 109 arquivos do blog: uma linha de texto solto
+  // (que parafraseia o título, mas não é heading markdown) seguida de um H1
+  // real que duplica o <h1> do layout. Só o H1 (e a linha em branco seguinte)
+  // deve ser removido — a linha de abertura precisa ser preservada intacta.
+  const markdown =
+    "American Bully: Tudo Sobre a Raça\n\n# American Bully\n\nConteúdo real do post.\n";
+  assert.equal(
+    stripDuplicateH1(markdown),
+    "American Bully: Tudo Sobre a Raça\n\nConteúdo real do post.\n",
+  );
+});
+
+test("listPosts sinaliza h1-duplicado quando o H1 vem depois de uma linha de abertura", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
+  try {
+    await mkdir(path.join(dir, "caes"), { recursive: true });
+    await writeFile(
+      path.join(dir, "caes", "american-bully-abertura.mdx"),
+      `---
+title: "American Bully: Características e Informações sobre a Raça"
+excerpt: "Tudo sobre a raça American Bully, temperamento e cuidados"
+category: "caes"
+type: "guia"
+hero: "https://cdn.azpetshop.com.br/posts/caes/american-bully/hero.jpg"
+heroAlt: "American Bully deitado no jardim"
+publishedAt: 2026-01-10
+author: "Equipe AZ Pet Shop"
+draft: false
+products: []
+---
+
+American Bully: Tudo Sobre a Raça
+
+# American Bully
+
+Conteúdo real do post.
+`,
+      "utf8",
+    );
+    const posts = await listPosts(dir);
+    assert.equal(posts.length, 1);
+    assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("listPosts sinaliza h1-duplicado mesmo quando o H1 do corpo tem texto diferente (abreviado) do título", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "azpetshop-posts-test-"));
+  try {
+    await mkdir(path.join(dir, "caes"), { recursive: true });
+    await writeFile(
+      path.join(dir, "caes", "american-bully.mdx"),
+      `---
+title: "American Bully: Características e Informações sobre a Raça"
+excerpt: "Tudo sobre a raça American Bully, temperamento e cuidados"
+category: "caes"
+type: "guia"
+hero: "https://cdn.azpetshop.com.br/posts/caes/american-bully/hero.jpg"
+heroAlt: "American Bully deitado no jardim"
+publishedAt: 2026-01-10
+author: "Equipe AZ Pet Shop"
+draft: false
+products: []
+---
+
+# American Bully
+
+Conteúdo sobre a raça.
+`,
+      "utf8",
+    );
+    const posts = await listPosts(dir);
+    assert.equal(posts.length, 1);
+    assert.ok(posts[0].seoFlags.includes("h1-duplicado"));
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

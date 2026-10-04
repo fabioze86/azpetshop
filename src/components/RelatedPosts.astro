@@ -1,0 +1,37 @@
+---
+import { getCollection } from "astro:content";
+import { labelFor } from "../lib/categories";
+
+interface Props {
+  category: string;
+  currentId: string;
+  limit?: number;
+}
+const { category, currentId, limit = 4 } = Astro.props;
+
+const posts = (
+  await getCollection(
+    "blog",
+    (p) => !p.data.draft && p.data.category === category && p.id !== currentId,
+  )
+)
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf())
+  .slice(0, limit);
+---
+
+{
+  posts.length > 0 && (
+    <section class="mt-12 border-t border-line pt-8">
+      <h2 class="text-xl font-extrabold text-navy">Continue lendo sobre {labelFor(category)}</h2>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {posts.map((p) => (
+          <li>
+            <a href={`/blog/${p.id}/`} class="font-bold text-pink hover:underline">
+              {p.data.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

@@ -1,0 +1,45 @@
+---
+interface Crumb {
+  name: string;
+  url: string;
+}
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  url: string;
+  author: string;
+  datePublished: Date;
+  dateModified?: Date;
+  breadcrumbs: Crumb[];
+}
+const { title, description, image, url, author, datePublished, dateModified, breadcrumbs } =
+  Astro.props;
+
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: title,
+  description,
+  ...(image ? { image: [image] } : {}),
+  author: { "@type": "Organization", name: author },
+  publisher: { "@type": "Organization", name: "AZ Pet Shop" },
+  datePublished: datePublished.toISOString(),
+  dateModified: (dateModified ?? datePublished).toISOString(),
+  mainEntityOfPage: { "@type": "WebPage", "@id": url },
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: breadcrumbs.map((c, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: c.name,
+    item: c.url,
+  })),
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(articleLd).replace(/</g, "\\u003c")} />
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd).replace(/</g, "\\u003c")} />

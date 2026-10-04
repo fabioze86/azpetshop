@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "migrate": "node scripts/migrate.mjs",
     "upload-image": "node scripts/upload-image.mjs",
+    "fix-duplicate-h1": "node scripts/fix-duplicate-h1.mjs",
     "generate-types": "wrangler types",
     "admin": "node scripts/admin/server.mjs",
     "test:admin": "node --test scripts/admin/lib/posts.test.mjs scripts/admin/lib/upload.test.mjs",
