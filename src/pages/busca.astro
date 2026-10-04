@@ -1,0 +1,129 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Buscar no blog — AZ Pet Shop" description="Busque artigos, guias e comparativos do blog da AZ Pet Shop.">
+  <meta name="robots" content="noindex, follow" slot="head" />
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h1 class="mb-6 text-3xl font-black text-navy">Buscar no blog</h1>
+    <form action="/busca/" method="get" role="search" class="mb-4 flex gap-2">
+      <label for="q" class="sr-only">Termo de busca</label>
+      <input
+        id="q"
+        name="q"
+        type="search"
+        autocomplete="off"
+        placeholder="Ex.: ração para filhotes, tapete higiênico, tetra neon…"
+        class="w-full rounded-full border border-line bg-paper px-5 py-3 text-ink outline-none focus:border-pink"
+      />
+      <button type="submit" class="rounded-full bg-pink px-6 py-3 font-bold text-white hover:bg-pink-600">Buscar</button>
+    </form>
+    <p id="status" class="mb-8 text-sm text-ink/70" aria-live="polite"></p>
+    <div id="results" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+  </section>
+</BaseLayout>
+
+<script>
+  type Entry = {
+    url: string;
+    title: string;
+    excerpt: string;
+    category: string;
+    type: string;
+    hero: string | null;
+    headings: string[];
+    products: string[];
+  };
+
+  const norm = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+  const input = document.getElementById("q") as HTMLInputElement;
+  const status = document.getElementById("status")!;
+  const results = document.getElementById("results")!;
+
+  let index: (Entry & { _t: string; _e: string; _h: string; _c: string })[] = [];
+
+  function score(e: (typeof index)[number], terms: string[]): number {
+    let total = 0;
+    for (const t of terms) {
+      let s = 0;
+      if (e._t.includes(t)) s += 10;
+      if (e._c.includes(t)) s += 4;
+      if (e._h.includes(t)) s += 3;
+      if (e._e.includes(t)) s += 2;
+      if (s === 0) return 0; // todos os termos precisam aparecer
+      total += s;
+    }
+    return total;
+  }
+
+  function card(e: Entry): string {
+    const img = e.hero
+      ? `<img src="${esc(e.hero)}" alt="" loading="lazy" class="h-full w-full object-cover" />`
+      : `<div class="flex h-full w-full items-center justify-center text-4xl text-cyan">🐾</div>`;
+    const badge =
+      e.type === "roundup"
+        ? `<span class="rounded-full bg-cyan/15 px-2 py-0.5 text-cyan">Comparativo</span>`
+        : "";
+    return `<article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-paper transition-shadow hover:shadow-md">
+      <a href="${esc(e.url)}" class="block aspect-[16/10] overflow-hidden bg-mist">${img}</a>
+      <div class="flex flex-1 flex-col p-5">
+        <div class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
+          <span class="text-pink">${esc(e.category)}</span>${badge}
+        </div>
+        <h2 class="text-lg font-extrabold leading-snug text-navy"><a href="${esc(e.url)}" class="hover:text-pink">${esc(e.title)}</a></h2>
+        <p class="mt-2 line-clamp-3 flex-1 text-sm text-ink/75">${esc(e.excerpt)}</p>
+      </div>
+    </article>`;
+  }
+
+  function run(q: string) {
+    const terms = norm(q).split(/\s+/).filter((t) => t.length > 1);
+    if (terms.length === 0) {
+      status.textContent = "Digite um termo para buscar.";
+      results.innerHTML = "";
+      return;
+    }
+    const hits = index
+      .map((e) => ({ e, s: score(e, terms) }))
+      .filter((h) => h.s > 0)
+      .sort((a, b) => b.s - a.s);
+    status.textContent = hits.length
+      ? `${hits.length} resultado${hits.length > 1 ? "s" : ""} para “${q}”`
+      : `Nenhum resultado para “${q}”. Tente outra palavra.`;
+    results.innerHTML = hits.map((h) => card(h.e)).join("");
+  }
+
+  async function init() {
+    const q = new URLSearchParams(location.search).get("q") ?? "";
+    input.value = q;
+    status.textContent = "Carregando…";
+    const data: Entry[] = await fetch("/busca.json").then((r) => r.json());
+    index = data.map((e) => ({
+      ...e,
+      _t: norm(e.title),
+      _e: norm(e.excerpt),
+      _h: norm([...e.headings, ...e.products].join(" ")),
+      _c: norm(e.category),
+    }));
+    run(q);
+
+    let timer: number | undefined;
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const v = input.value.trim();
+        history.replaceState(null, "", v ? `/busca/?q=${encodeURIComponent(v)}` : "/busca/");
+        run(v);
+      }, 150);
+    });
+  }
+
+  init().catch(() => {
+    status.textContent = "Não foi possível carregar a busca. Tente novamente.";
+  });
+</script>
