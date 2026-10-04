@@ -26,6 +26,10 @@ const blog = defineCollection({
           name: z.string(),
           image: z.string().optional(),
           affiliateUrl: z.string().url(),
+          // "own" = produto vendido na loja.azpetshop.com.br; "affiliate" = link com
+          // comissão (padrão, preserva o pipeline content-hub que nunca seta este campo);
+          // "external" = produto de terceiro sem comissão.
+          source: z.enum(["own", "affiliate", "external"]).default("affiliate"),
           price: z.string().optional(),
           badge: z.string().optional(), // ex.: "Nossa escolha", "Melhor custo-benefício"
           pros: z.array(z.string()).default([]),

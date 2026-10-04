@@ -2,10 +2,17 @@
 interface Product {
   name: string;
   affiliateUrl: string;
+  source?: "own" | "affiliate" | "external";
   price?: string;
   badge?: string;
 }
 const { products } = Astro.props as { products: Product[] };
+
+const ctaBySource = {
+  own: { label: "Comprar →", rel: "", target: "_self" as const },
+  affiliate: { label: "Ver oferta →", rel: "sponsored nofollow noopener", target: "_blank" as const },
+  external: { label: "Ver na loja parceira →", rel: "nofollow noopener", target: "_blank" as const },
+};
 ---
 
 <div class="my-8 overflow-x-auto rounded-2xl border border-line">
@@ -20,23 +27,26 @@ const { products } = Astro.props as { products: Product[] };
     </thead>
     <tbody>
       {
-        products.map((p) => (
-          <tr class="border-t border-line align-middle">
-            <td class="px-4 py-3 font-bold text-navy">{p.name}</td>
-            <td class="px-4 py-3">{p.badge ?? "—"}</td>
-            <td class="px-4 py-3 font-bold text-green">{p.price ?? "—"}</td>
-            <td class="px-4 py-3">
-              <a
-                href={p.affiliateUrl}
-                target="_blank"
-                rel="sponsored nofollow noopener"
-                class="font-bold text-pink hover:text-pink-600"
-              >
-                Ver oferta →
-              </a>
-            </td>
-          </tr>
-        ))
+        products.map((p) => {
+          const cta = ctaBySource[p.source ?? "affiliate"];
+          return (
+            <tr class="border-t border-line align-middle">
+              <td class="px-4 py-3 font-bold text-navy">{p.name}</td>
+              <td class="px-4 py-3">{p.badge ?? "—"}</td>
+              <td class="px-4 py-3 font-bold text-green">{p.price ?? "—"}</td>
+              <td class="px-4 py-3">
+                <a
+                  href={p.affiliateUrl}
+                  target={cta.target}
+                  rel={cta.rel || undefined}
+                  class="font-bold text-pink hover:text-pink-600"
+                >
+                  {cta.label}
+                </a>
+              </td>
+            </tr>
+          );
+        })
       }
     </tbody>
   </table>

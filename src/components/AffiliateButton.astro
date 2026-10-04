@@ -3,8 +3,16 @@ interface Props {
   href: string;
   label?: string;
   variant?: "primary" | "outline";
+  rel?: string;
+  target?: "_blank" | "_self";
 }
-const { href, label = "Ver oferta", variant = "primary" } = Astro.props;
+const {
+  href,
+  label = "Ver oferta",
+  variant = "primary",
+  rel = "sponsored nofollow noopener",
+  target = "_blank",
+} = Astro.props;
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-colors";
@@ -16,8 +24,8 @@ const styles = {
 
 <a
   href={href}
-  target="_blank"
-  rel="sponsored nofollow noopener"
+  target={target}
+  rel={rel || undefined}
   class={`${base} ${styles[variant]}`}
 >
   {label}

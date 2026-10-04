@@ -5,6 +5,7 @@ interface Product {
   name: string;
   image?: string;
   affiliateUrl: string;
+  source?: "own" | "affiliate" | "external";
   price?: string;
   badge?: string;
   pros?: string[];
@@ -12,6 +13,14 @@ interface Product {
   verdict?: string;
 }
 const { product } = Astro.props as { product: Product };
+
+const source = product.source ?? "affiliate";
+const ctaBySource = {
+  own: { label: "Comprar", rel: "", target: "_self" as const },
+  affiliate: { label: "Ver preço", rel: "sponsored nofollow noopener", target: "_blank" as const },
+  external: { label: "Ver na loja parceira", rel: "nofollow noopener", target: "_blank" as const },
+};
+const cta = ctaBySource[source];
 ---
 
 <div class="my-8 overflow-hidden rounded-2xl border border-line bg-paper shadow-sm">
@@ -71,8 +80,21 @@ const { product } = Astro.props as { product: Product };
         }
       </div>
 
+      {
+        source === "affiliate" && (
+          <span class="mt-4 inline-block text-xs font-bold uppercase tracking-wide text-ink/50">
+            Link de afiliado
+          </span>
+        )
+      }
+
       <div class="mt-5">
-        <AffiliateButton href={product.affiliateUrl} label="Ver preço" />
+        <AffiliateButton
+          href={product.affiliateUrl}
+          label={cta.label}
+          rel={cta.rel}
+          target={cta.target}
+        />
       </div>
     </div>
   </div>
