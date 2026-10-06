@@ -1,0 +1,579 @@
+---
+// Infográfico interativo de raça, para usar no meio do artigo:
+//   <BreedInfographic raca="american-bully" />
+// Dados em src/data/racas.ts. Todo o conteúdo é HTML real (indexável) e
+// funciona sem JS; o script só adiciona as animações e a interatividade.
+import { RACAS } from "../data/racas";
+
+interface Props {
+  raca: string;
+}
+const r = RACAS[Astro.props.raca];
+if (!r) throw new Error(`BreedInfographic: raça "${Astro.props.raca}" não cadastrada em src/data/racas.ts`);
+const pct = (v: number, max: number) => `${Math.min(100, (v / max) * 100).toFixed(1)}%`;
+const tipoInicial = r.tipos?.[0];
+---
+
+<section class="infografico not-prose my-10 overflow-hidden rounded-3xl bg-navy text-white shadow-xl" data-infografico aria-label={`Infográfico: ${r.nome}`}>
+  <!-- Cabeçalho -->
+  <header class="relative px-6 pb-6 pt-8 md:px-10">
+    <svg class="pata" viewBox="0 0 400 400" aria-hidden="true">
+      <ellipse cx="200" cy="265" rx="105" ry="90" />
+      <ellipse cx="85" cy="160" rx="42" ry="55" transform="rotate(-20 85 160)" />
+      <ellipse cx="155" cy="95" rx="42" ry="58" transform="rotate(-6 155 95)" />
+      <ellipse cx="245" cy="95" rx="42" ry="58" transform="rotate(6 245 95)" />
+      <ellipse cx="315" cy="160" rx="42" ry="55" transform="rotate(20 315 160)" />
+    </svg>
+    <span class="inline-block rounded-full bg-pink px-3 py-1 text-xs font-extrabold uppercase tracking-widest">Infográfico</span>
+    <h2 class="mt-3 font-display text-3xl font-black leading-tight md:text-4xl">{r.nome} em um olhar</h2>
+    {r.apelido && <p class="mt-1 text-lg font-bold text-cyan">{r.apelido}</p>}
+    <div class="mt-4 flex flex-wrap gap-2 text-sm font-bold">
+      <span class="chip">Origem: {r.origem}</span>
+      {r.reconhecimento && <span class="chip">Reconhecida oficialmente em {r.reconhecimento}</span>}
+    </div>
+  </header>
+
+  <!-- Números -->
+  <div class="grid gap-4 px-6 pb-8 sm:grid-cols-3 md:px-10">
+    {
+      r.stats.map((s, i) => (
+        <div class="reveal rounded-2xl bg-white/10 p-5" style={`--d:${i * 0.12}s`}>
+          <p class="text-xs font-extrabold uppercase tracking-wider text-cyan">{s.label}</p>
+          <p class="mt-1 font-display text-4xl font-black leading-none">
+            <span data-count={s.min}>{s.min}</span>–<span data-count={s.max}>{s.max}</span>
+            <span class="text-lg font-bold text-white/80"> {s.unidade}</span>
+          </p>
+          <div class="trilho mt-4" aria-hidden="true">
+            <div class="faixa" style={`left:${pct(s.min, s.escalaMax)};width:calc(${pct(s.max, s.escalaMax)} - ${pct(s.min, s.escalaMax)})`} />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="space-y-10 rounded-t-3xl bg-white px-6 py-8 text-ink md:px-10">
+    <!-- Tipos -->
+    {
+      r.tipos && tipoInicial && (
+        <section class="reveal" data-tipos>
+          <h3 class="titulo">Os {r.tipos.length} tipos de {r.nome}</h3>
+          <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Escolha um tipo">
+            {r.tipos.map((t, i) => (
+              <button type="button" class="tipo-btn" data-tipo={i} aria-pressed={i === 0 ? "true" : "false"}>
+                {t.nome}
+              </button>
+            ))}
+          </div>
+          <div class="palco mt-5" aria-hidden="true">
+            {r.tipos.map((t, i) => (
+              <div class={`cao ${i === 0 ? "ativo" : ""}`} data-cao={i} style={`--s:${t.escala}`}>
+                <svg viewBox="0 0 210 140">
+                  <path d="M44 62 Q28 70 26 86" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" />
+                  <rect x="38" y="50" width="108" height="48" rx="22" />
+                  <ellipse cx="128" cy="78" rx="34" ry="30" />
+                  <ellipse cx="160" cy="50" rx="31" ry="28" />
+                  <rect x="170" y="50" width="34" height="26" rx="11" />
+                  <path d="M138 34 Q146 16 162 26 L156 40 Z" />
+                  <rect x="48" y="86" width="19" height="46" rx="8" />
+                  <rect x="72" y="86" width="19" height="46" rx="8" />
+                  <rect x="110" y="86" width="19" height="46" rx="8" />
+                  <rect x="134" y="86" width="19" height="46" rx="8" />
+                </svg>
+                <span>{t.nome}</span>
+              </div>
+            ))}
+          </div>
+          <p class="mt-3 rounded-xl bg-mist px-4 py-3 text-sm" aria-live="polite" data-tipo-desc>
+            <strong class="text-navy">{tipoInicial.nome} · {tipoInicial.porte}:</strong> {tipoInicial.descricao}
+          </p>
+          <script is:inline type="application/json" data-tipos-json set:html={JSON.stringify(r.tipos)} />
+        </section>
+      )
+    }
+
+    <!-- Temperamento -->
+    <section class="reveal">
+      <h3 class="titulo">Temperamento e convivência</h3>
+      <ul class="mt-4 space-y-4">
+        {
+          r.temperamento.map((t, i) => (
+            <li>
+              <div class="flex items-baseline justify-between gap-3">
+                <span class="font-bold text-navy">{t.label}</span>
+                <span class="text-xs font-extrabold text-pink">{t.nivel}/5</span>
+              </div>
+              <div class="barra mt-1.5" role="img" aria-label={`${t.label}: ${t.nivel} de 5`}>
+                <div class="barra-fill" style={`width:${t.nivel * 20}%;--d:${i * 0.08}s`} />
+              </div>
+              <p class="mt-1 text-sm text-ink/70">{t.nota}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- Cores -->
+    <section class="reveal" data-cores>
+      <h3 class="titulo">Cores da pelagem</h3>
+      <div class="mt-4 flex flex-wrap gap-3">
+        {
+          r.cores.map((c) => (
+            <button type="button" class="cor" style={`--c:${c.hex}`} data-cor={c.nome} data-comum={c.comum ? "1" : ""} aria-label={c.nome} title={c.nome} />
+          ))
+        }
+      </div>
+      <p class="mt-3 text-sm" data-cor-label>
+        Mais comuns: <strong class="text-navy">{r.cores.filter((c) => c.comum).map((c) => c.nome).join(" e ")}</strong>. Toque em uma cor para ver o nome.
+      </p>
+    </section>
+
+    <!-- Rotina -->
+    <section class="reveal">
+      <h3 class="titulo">Rotina de cuidados</h3>
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        {
+          r.rotina.map((c) => (
+            <div class="flex gap-3 rounded-2xl border border-line p-4">
+              <span class="icone" aria-hidden="true">
+                {c.icone === "racao" && (
+                  <svg viewBox="0 0 24 24"><path d="M3 12h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8Z" /><circle cx="9" cy="9" r="1.6" /><circle cx="13" cy="7.5" r="1.6" /><circle cx="15.5" cy="10" r="1.6" /></svg>
+                )}
+                {c.icone === "passeio" && (
+                  <svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="2" /><path d="M9 21l2-7-2-2V8l4-1 3 4h3v2h-4l-2-2v3l2 2 1 5h-2l-1-4-2-2-1 6Z" /></svg>
+                )}
+                {c.icone === "banho" && (
+                  <svg viewBox="0 0 24 24"><path d="M3 12h18v2a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6Z" /><path d="M6 12V6a3 3 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="15" cy="7" r="1.3" /><circle cx="18" cy="9" r="1" /></svg>
+                )}
+                {c.icone === "vet" && (
+                  <svg viewBox="0 0 24 24"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7Z" /></svg>
+                )}
+              </span>
+              <div>
+                <p class="font-extrabold text-navy">{c.titulo}</p>
+                <p class="text-sm text-ink/80">{c.texto}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- Saúde -->
+    <section class="reveal">
+      <h3 class="titulo">Saúde: fique de olho</h3>
+      <div class="mt-4 grid gap-2 sm:grid-cols-2">
+        {
+          r.saude.map((s) => (
+            <details class="saude">
+              <summary>{s.nome}</summary>
+              <p>{s.dica}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- Mito ou verdade -->
+    <section class="reveal">
+      <h3 class="titulo">Mito ou verdade?</h3>
+      <p class="mt-1 text-sm text-ink/70">Toque no card para revelar.</p>
+      <div class="mt-4 grid gap-3 md:grid-cols-3">
+        {
+          r.mitos.map((m) => (
+            <button type="button" class="mito" aria-expanded="false">
+              <span class="lado frente">
+                <span class="q">?</span>
+                <span class="font-bold">{m.pergunta}</span>
+              </span>
+              <span class="lado verso">
+                <span class="veredito">{m.veredito}</span>
+                <span class="text-sm">{m.resposta}</span>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+    </section>
+
+    {
+      r.curiosidade && (
+        <p class="reveal rounded-2xl bg-pink px-5 py-4 font-bold text-white">
+          <span class="mr-1 uppercase tracking-wider text-white/80">Curiosidade:</span> {r.curiosidade}
+        </p>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .pata {
+    position: absolute;
+    right: -30px;
+    top: -20px;
+    width: 220px;
+    fill: rgb(255 255 255 / 0.06);
+    transform: rotate(18deg);
+    pointer-events: none;
+  }
+  .chip {
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.12);
+    padding: 0.35rem 0.85rem;
+  }
+  .titulo {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--color-navy);
+  }
+  .titulo::after {
+    content: "";
+    display: block;
+    margin-top: 0.4rem;
+    width: 3rem;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-cyan);
+  }
+
+  /* faixa de valores (peso, altura, vida) */
+  .trilho {
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.15);
+  }
+  .faixa {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-cyan), var(--color-pink));
+    transform-origin: left;
+  }
+
+  /* barras de temperamento */
+  .barra {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--color-mist);
+    overflow: hidden;
+  }
+  .barra-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-cyan), var(--color-navy));
+    transform-origin: left;
+  }
+
+  /* tipos */
+  .tipo-btn {
+    border-radius: 999px;
+    border: 2px solid var(--color-line);
+    padding: 0.45rem 1.1rem;
+    font-weight: 800;
+    color: var(--color-navy);
+    transition: all 0.2s;
+  }
+  .tipo-btn:hover {
+    border-color: var(--color-cyan);
+  }
+  .tipo-btn[aria-pressed="true"] {
+    background: var(--color-navy);
+    border-color: var(--color-navy);
+    color: #fff;
+  }
+  .palco {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    gap: 0.5rem;
+    min-height: clamp(90px, 20vw, 150px);
+    border-bottom: 3px solid var(--color-line);
+    padding-bottom: 0.25rem;
+  }
+  .cao {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 24%;
+    color: #c9d1e3;
+    transition: color 0.3s;
+  }
+  .cao svg {
+    width: calc(100% * var(--s));
+    fill: currentColor;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .cao span {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #94a0b8;
+  }
+  .cao.ativo {
+    color: var(--color-pink);
+  }
+  .cao.ativo svg {
+    transform: translateY(-6px) scale(1.06);
+  }
+  .cao.ativo span {
+    color: var(--color-navy);
+  }
+
+  /* cores */
+  .cor {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--c);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--color-line);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .cor[data-comum="1"]::after {
+    content: "★";
+    position: absolute;
+    right: -6px;
+    top: -8px;
+    font-size: 14px;
+    color: var(--color-pink);
+  }
+  .cor:hover,
+  .cor.ativa {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px var(--color-pink);
+  }
+
+  .icone {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--color-cyan) 15%, white);
+    color: var(--color-navy);
+  }
+  .icone svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  /* saúde */
+  .saude {
+    border-radius: 14px;
+    border: 1px solid var(--color-line);
+    padding: 0.75rem 1rem;
+  }
+  .saude summary {
+    cursor: pointer;
+    font-weight: 800;
+    color: var(--color-navy);
+    list-style: none;
+  }
+  .saude summary::-webkit-details-marker {
+    display: none;
+  }
+  .saude summary::before {
+    content: "+";
+    display: inline-block;
+    width: 1.2rem;
+    color: var(--color-pink);
+    font-weight: 900;
+    transition: transform 0.2s;
+  }
+  .saude[open] summary::before {
+    transform: rotate(45deg);
+  }
+  .saude p {
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  /* mito ou verdade (sem JS: pergunta e resposta empilhadas) */
+  .mito {
+    display: grid;
+    text-align: left;
+    border-radius: 18px;
+    color: var(--color-navy);
+  }
+  .lado {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-radius: 18px;
+    padding: 1.1rem;
+  }
+  .frente {
+    background: var(--color-mist);
+  }
+  .verso {
+    background: var(--color-navy);
+    color: #fff;
+  }
+  .q {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--color-cyan);
+  }
+  .veredito {
+    align-self: flex-start;
+    border-radius: 999px;
+    background: var(--color-pink);
+    padding: 0.15rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ---------- com JS: animações e flip ---------- */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease var(--d, 0s), transform 0.6s ease var(--d, 0s);
+  }
+  .js .reveal.visivel {
+    opacity: 1;
+    transform: none;
+  }
+  .js .faixa,
+  .js .barra-fill {
+    transform: scaleX(0);
+    transition: transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--d, 0s) + 0.2s);
+  }
+  .js .visivel .faixa,
+  .js .visivel .barra-fill {
+    transform: scaleX(1);
+  }
+  .js .mito {
+    perspective: 900px;
+    min-height: 170px;
+    cursor: pointer;
+  }
+  .js .mito .lado {
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+  .js .mito .verso {
+    transform: rotateY(180deg);
+  }
+  .js .mito.virado .frente {
+    transform: rotateY(-180deg);
+  }
+  .js .mito.virado .verso {
+    transform: rotateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal,
+    .js .faixa,
+    .js .barra-fill,
+    .js .mito .lado,
+    .cao svg {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const reduz = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function contar(el: HTMLElement) {
+    const alvo = Number(el.dataset.count);
+    if (reduz || !alvo) return;
+    const t0 = performance.now();
+    const dur = 1200;
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - t0) / dur);
+      el.textContent = String(Math.round(alvo * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(passo);
+    };
+    el.textContent = "0";
+    requestAnimationFrame(passo);
+  }
+
+  // Revela os blocos cujo topo já entrou na tela (ou que já ficaram para trás).
+  // Checagem por rolagem em vez de IntersectionObserver: numa rolagem rápida o
+  // observer pode "pular" um bloco inteiro e ele ficaria invisível.
+  const pendentes = new Set<HTMLElement>();
+  function revelar() {
+    const limite = window.innerHeight * 0.88;
+    for (const el of pendentes) {
+      if (el.getBoundingClientRect().top < limite) {
+        el.classList.add("visivel");
+        el.querySelectorAll<HTMLElement>("[data-count]").forEach(contar);
+        pendentes.delete(el);
+      }
+    }
+    if (!pendentes.size) window.removeEventListener("scroll", agendar);
+  }
+  let agendado = false;
+  function agendar() {
+    if (agendado) return;
+    agendado = true;
+    requestAnimationFrame(() => {
+      agendado = false;
+      revelar();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-infografico]").forEach((root) => {
+    root.classList.add("js");
+    root.querySelectorAll<HTMLElement>(".reveal").forEach((el) => pendentes.add(el));
+
+    // Tipos: destaca a silhueta e troca a descrição
+    const tiposEl = root.querySelector<HTMLElement>("[data-tipos]");
+    if (tiposEl) {
+      const tipos = JSON.parse(tiposEl.querySelector("[data-tipos-json]")!.textContent || "[]");
+      const desc = tiposEl.querySelector<HTMLElement>("[data-tipo-desc]")!;
+      tiposEl.querySelectorAll<HTMLButtonElement>("[data-tipo]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const i = Number(btn.dataset.tipo);
+          tiposEl.querySelectorAll("[data-tipo]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+          tiposEl.querySelectorAll("[data-cao]").forEach((c) => c.classList.toggle("ativo", Number((c as HTMLElement).dataset.cao) === i));
+          const t = tipos[i];
+          desc.innerHTML = "";
+          const strong = document.createElement("strong");
+          strong.className = "text-navy";
+          strong.textContent = `${t.nome} · ${t.porte}:`;
+          desc.append(strong, ` ${t.descricao}`);
+        });
+      });
+    }
+
+    // Cores: mostra o nome da cor tocada
+    const coresEl = root.querySelector<HTMLElement>("[data-cores]");
+    if (coresEl) {
+      const label = coresEl.querySelector<HTMLElement>("[data-cor-label]")!;
+      coresEl.querySelectorAll<HTMLButtonElement>("[data-cor]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          coresEl.querySelectorAll("[data-cor]").forEach((b) => b.classList.toggle("ativa", b === btn));
+          label.innerHTML = "";
+          const strong = document.createElement("strong");
+          strong.className = "text-navy";
+          strong.textContent = btn.dataset.cor ?? "";
+          label.append("Cor: ", strong, btn.dataset.comum ? " — uma das mais comuns na raça." : "");
+        });
+      });
+    }
+
+    // Mito ou verdade: vira o card
+    root.querySelectorAll<HTMLButtonElement>(".mito").forEach((card) => {
+      card.addEventListener("click", () => {
+        const virado = card.classList.toggle("virado");
+        card.setAttribute("aria-expanded", String(virado));
+      });
+    });
+  });
+
+  window.addEventListener("scroll", agendar, { passive: true });
+  window.addEventListener("resize", agendar);
+  revelar();
+</script>

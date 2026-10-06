@@ -49,3 +49,14 @@ h1, h2, h3, h4 {
   --tw-prose-quotes: var(--color-navy);
   --tw-prose-bullets: var(--color-cyan);
 }
+
+/* Fotos de produto clicáveis no corpo do artigo (![...](img)](link afiliado)):
+   mesma altura máxima do ProductHighlight (max-h-56), centralizadas. Sem isso
+   embalagens em retrato aparecem no tamanho natural (500px+). */
+.prose a > img {
+  display: block;
+  max-height: 14rem;
+  width: auto;
+  margin-inline: auto;
+  object-fit: contain;
+}
