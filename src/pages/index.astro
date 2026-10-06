@@ -11,10 +11,21 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 const [featured, ...rest] = posts;
 const grid = rest.slice(0, 9);
 
+const THUMBS = new Set(
+  Object.keys(import.meta.glob("/public/img/racas/*.webp")).map((k) => k.replace(/^\/public/, "")),
+);
+
 // Só raças cujo artigo existe e está publicado, em ordem alfabética.
 const breeds = posts
   .filter((p) => p.data.category === "caes" && DOG_BREEDS[p.id.split("/")[1]])
-  .map((p) => ({ href: `/blog/${p.id}/`, name: DOG_BREEDS[p.id.split("/")[1]], hero: p.data.hero }))
+  .map((p) => {
+    const slug = p.id.split("/")[1];
+    // Miniatura recortada só com a foto da raça (scripts/breed-thumbs.mjs);
+    // se ainda não foi gerada, cai na capa do artigo.
+    const thumb = `/img/racas/${slug}.webp`;
+    const hero = THUMBS.has(thumb) ? thumb : p.data.hero;
+    return { href: `/blog/${p.id}/`, name: DOG_BREEDS[slug], hero };
+  })
   .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 ---
 

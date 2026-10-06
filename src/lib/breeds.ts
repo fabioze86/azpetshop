@@ -1,5 +1,6 @@
 // Artigos de raça de cachorro (src/content/blog/caes/<slug>.mdx) -> nome curto
-// exibido nos atalhos da home. Ao publicar uma raça nova, adicione aqui.
+// exibido nos atalhos da home. Ao publicar uma raça nova, adicione aqui e rode
+// `node scripts/breed-thumbs.mjs` para gerar a miniatura.
 export const DOG_BREEDS: Record<string, string> = {
   "american-bully": "American Bully",
   basenji: "Basenji",
