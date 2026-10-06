@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ArticleCard from "../components/ArticleCard.astro";
+import { DOG_BREEDS } from "../lib/breeds";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
@@ -9,6 +10,12 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 
 const [featured, ...rest] = posts;
 const grid = rest.slice(0, 9);
+
+// Só raças cujo artigo existe e está publicado, em ordem alfabética.
+const breeds = posts
+  .filter((p) => p.data.category === "caes" && DOG_BREEDS[p.id.split("/")[1]])
+  .map((p) => ({ href: `/blog/${p.id}/`, name: DOG_BREEDS[p.id.split("/")[1]], hero: p.data.hero }))
+  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 ---
 
 <BaseLayout title="AZ Pet Shop — Guias e comparativos para cuidar do seu pet">
@@ -69,4 +76,30 @@ const grid = rest.slice(0, 9);
       }
     </div>
   </section>
+
+  <!-- Atalhos para raças de cachorro -->
+  {
+    breeds.length > 0 && (
+      <section class="mx-auto max-w-6xl px-4 pb-16">
+        <h2 class="mb-2 text-2xl font-extrabold text-navy">Raças de cachorro</h2>
+        <p class="mb-6 text-ink/70">Conheça personalidade, cuidados e características de cada raça.</p>
+        <ul class="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {breeds.map((b) => (
+            <li>
+              <a href={b.href} class="group flex flex-col items-center gap-2 text-center">
+                <span class="block h-16 w-16 overflow-hidden rounded-full border-2 border-line bg-mist transition-colors group-hover:border-pink sm:h-20 sm:w-20">
+                  {b.hero ? (
+                    <img src={b.hero} alt="" loading="lazy" class="h-full w-full object-cover" />
+                  ) : (
+                    <span class="flex h-full w-full items-center justify-center text-2xl text-cyan">🐾</span>
+                  )}
+                </span>
+                <span class="text-xs font-bold leading-tight text-navy group-hover:text-pink sm:text-sm">{b.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </BaseLayout>
