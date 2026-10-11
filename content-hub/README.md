@@ -14,4 +14,4 @@ Variável de ambiente necessária: `GEMINI_API_KEY`.
 
 Depois de gerar o artigo, faça upload das imagens reais dos produtos com `npm run upload-image` (o comando exato aparece no output de `content:escrever`), e revise o post gerado (`draft: true` por padrão) antes de publicar (mude pra `draft: false`).
 
-**Importante:** as imagens de origem para upload devem ser `.jpg`. As URLs geradas em `content-hub/lib/images.ts` (`cdnImageUrl`) sempre terminam em `.jpg`, mas `scripts/upload-image.mjs` deriva a extensão final do arquivo local passado em `--file` — se você subir um `.png`/`.webp`, a URL final não vai bater com o que já está no frontmatter/corpo do post gerado.
+**Imagens:** ficam no Cloudflare Images (conta do Hub Catálogo), com ID `posts/<categoria>/<slug>/<nome>`. As URLs geradas em `content-hub/lib/images.ts` (`imageDeliveryUrl`) e as devolvidas por `scripts/upload-image.mjs` não têm extensão, então `.jpg`, `.png` ou `.webp` de origem dão a mesma URL. O upload exige `CLOUDFLARE_ACCOUNT_ID` e `CLOUDFLARE_IMAGES_TOKEN` em `.env.local` (veja `.env.example`).

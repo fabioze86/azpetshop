@@ -16,8 +16,8 @@ export default defineConfig({
   site: "https://www.azpetshop.com.br",
   trailingSlash: "always",
   integrations: [mdx(), sitemap()],
-  // imagesBindingName evita colisão com o binding R2 "IMAGES" (bucket
-  // azpetshop-images) já usado em wrangler.jsonc — sem isso o adapter cria
-  // um binding de Cloudflare Images com o mesmo nome e o deploy falha.
+  // As imagens do blog ficam no Cloudflare Images (imagedelivery.net), enviadas por
+  // scripts/upload-image.mjs; o Worker não precisa de binding de storage. O nome
+  // customizado só evita que o adapter crie um binding "IMAGES" por padrão.
   adapter: cloudflare({ imagesBindingName: "ASTRO_IMAGES_SERVICE" }),
 });

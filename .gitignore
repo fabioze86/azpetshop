@@ -6,3 +6,7 @@ dist/
 worker-configuration.d.ts
 .wrangler/
 .claude/worktrees/
+
+# credenciais locais (Cloudflare Images etc.) — nunca versionar
+.env.local
+.env.*.local
