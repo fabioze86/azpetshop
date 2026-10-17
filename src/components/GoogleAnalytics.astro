@@ -1,0 +1,35 @@
+---
+// Google Analytics 4 (propriedade "AZ Petshop – GA4"). O ID de medição é público
+// por natureza, então fica no código. Só carrega no build de produção, para o
+// `astro dev` não poluir os relatórios.
+const GA_ID = "G-7JR087027T";
+const enabled = import.meta.env.PROD;
+---
+
+{enabled && (
+  <>
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
+    <script is:inline define:vars={{ GA_ID }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", GA_ID);
+
+      // Cliques que levam à loja irmã viram o evento "click_loja", para marcar
+      // como evento-chave no GA4 e medir quanto o blog manda de tráfego à loja.
+      document.addEventListener("click", (e) => {
+        const link = e.target instanceof Element ? e.target.closest("a[href]") : null;
+        if (!link) return;
+        const url = new URL(link.href, location.href);
+        if (url.hostname !== "loja.azpetshop.com.br") return;
+        gtag("event", "click_loja", {
+          link_url: url.href,
+          utm_campaign: url.searchParams.get("utm_campaign") || undefined,
+          transport_type: "beacon",
+        });
+      });
+    </script>
+  </>
+)}

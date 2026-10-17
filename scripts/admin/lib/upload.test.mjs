@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contentTypeFor, slugify, buildKey, buildCdnUrl, uploadFile } from "./upload.mjs";
+import { contentTypeFor, slugify, buildImageId, uploadFile } from "./upload.mjs";
+
+const CREDS = { accountId: "ACC", token: "TOK", hash: "HASH" };
 
 test("contentTypeFor reconhece extensões suportadas e rejeita as demais", () => {
   assert.equal(contentTypeFor(".jpg"), "image/jpeg");
@@ -13,45 +15,29 @@ test("slugify normaliza acentos e espaços", () => {
   assert.equal(slugify("  Foto do Rottweiler  "), "foto-do-rottweiler");
 });
 
-test("buildKey e buildCdnUrl montam o caminho esperado", () => {
-  const key = buildKey("caes", "rottweiler", "hero.jpg");
-  assert.equal(key, "posts/caes/rottweiler/hero.jpg");
-  assert.equal(buildCdnUrl(key), "https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg");
+test("buildImageId monta o ID sem extensão", () => {
+  assert.equal(buildImageId("caes", "rottweiler", "hero.jpg"), "posts/caes/rottweiler/hero");
+  assert.equal(buildImageId("caes", "rottweiler", "racao-x.webp"), "posts/caes/rottweiler/racao-x");
 });
 
-test("uploadFile invoca o wrangler com os argumentos corretos e devolve a URL do CDN", () => {
+test("uploadFile envia ao Cloudflare Images e devolve a URL imagedelivery.net", async () => {
   const calls = [];
-  const fakeExecFileSync = (file, args, opts) => {
-    calls.push({ file, args, opts });
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init });
+    return new Response(JSON.stringify({ success: true, result: {} }), { status: 200 });
   };
-  const url = uploadFile({
+  const url = await uploadFile({
     category: "caes",
     slug: "rottweiler",
     filename: "hero.jpg",
     filePath: "/tmp/fake.jpg",
     contentType: "image/jpeg",
-    execFileSync: fakeExecFileSync,
+    creds: CREDS,
+    fetchImpl,
+    readFileImpl: async () => Buffer.from("img"),
   });
-  assert.equal(url, "https://cdn.azpetshop.com.br/posts/caes/rottweiler/hero.jpg");
+  assert.equal(url, "https://imagedelivery.net/HASH/posts/caes/rottweiler/hero/public");
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].args, [
-    "r2", "object", "put", "azpetshop-images/posts/caes/rottweiler/hero.jpg",
-    "--file", "/tmp/fake.jpg", "--content-type", "image/jpeg", "--remote", "-y",
-  ]);
-});
-
-test("uploadFile passa valores com caracteres especiais como um único argumento literal (sem interpretação de shell)", () => {
-  const calls = [];
-  const fakeExecFileSync = (file, args) => {
-    calls.push({ file, args });
-  };
-  uploadFile({
-    category: "caes; rm -rf /",
-    slug: "rottweiler",
-    filename: "hero.jpg",
-    filePath: "/tmp/fake.jpg",
-    contentType: "image/jpeg",
-    execFileSync: fakeExecFileSync,
-  });
-  assert.equal(calls[0].args[3], "azpetshop-images/posts/caes; rm -rf //rottweiler/hero.jpg");
+  assert.equal(calls[0].init.body.get("id"), "posts/caes/rottweiler/hero");
+  assert.equal(calls[0].init.body.get("file").type, "image/jpeg");
 });

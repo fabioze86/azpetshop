@@ -1,11 +1,6 @@
-import { execFileSync as defaultExecFileSync } from "node:child_process";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-const WRANGLER = join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "wrangler.cmd" : "wrangler");
-const BUCKET = "azpetshop-images";
-const CDN = "https://cdn.azpetshop.com.br";
+import { readFile } from "node:fs/promises";
+import { basename, extname } from "node:path";
+import { imageIdFor, loadCredentials, uploadImage } from "../../lib/cf-images.mjs";
 
 const MIME = {
   ".jpg": "image/jpeg",
@@ -29,20 +24,23 @@ export function slugify(str) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function buildKey(category, slug, filename) {
-  return `posts/${category}/${slug}/${filename}`;
+// O ID no Cloudflare Images é o caminho sem extensão: "posts/<cat>/<slug>/<nome>".
+export function buildImageId(category, slug, filename) {
+  const name = basename(filename, extname(filename));
+  return imageIdFor(category, slug, name);
 }
 
-export function buildCdnUrl(key) {
-  return `${CDN}/${key}`;
-}
-
-export function uploadFile({ category, slug, filename, filePath, contentType, execFileSync = defaultExecFileSync }) {
-  const key = buildKey(category, slug, filename);
-  execFileSync(
-    WRANGLER,
-    ["r2", "object", "put", `${BUCKET}/${key}`, "--file", filePath, "--content-type", contentType, "--remote", "-y"],
-    { cwd: ROOT, stdio: "inherit" },
-  );
-  return buildCdnUrl(key);
+export async function uploadFile({
+  category,
+  slug,
+  filename,
+  filePath,
+  contentType,
+  creds = loadCredentials(),
+  fetchImpl = fetch,
+  readFileImpl = readFile,
+}) {
+  const id = buildImageId(category, slug, filename);
+  const data = await readFileImpl(filePath);
+  return uploadImage({ id, data, filename, contentType, creds, fetchImpl });
 }
