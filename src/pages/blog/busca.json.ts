@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { labelFor } from "../lib/categories";
+import { labelFor } from "../../lib/categories";
 
-// Índice estático consumido pela página /busca/. Gerado no build — inclui só
+// Índice estático consumido pela página /blog/busca/. Gerado no build — inclui só
 // metadados + subtítulos (h2/h3) para manter o JSON leve.
 export const prerender = true;
 

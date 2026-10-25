@@ -6,7 +6,7 @@ const cats = await existingCategories();
 
 <header class="sticky top-0 z-50 border-b border-line bg-paper/95 backdrop-blur">
   <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-    <a href="/" class="flex items-baseline gap-1 font-display text-2xl font-extrabold text-navy">
+    <a href="/blog/" class="flex items-baseline gap-1 font-display text-2xl font-extrabold text-navy">
       AZ<span class="text-pink">Pet</span>Shop
     </a>
     <nav class="hidden gap-6 md:flex">
@@ -19,7 +19,7 @@ const cats = await existingCategories();
       }
     </nav>
     <div class="flex items-center gap-3">
-      <form action="/busca/" method="get" role="search" class="hidden lg:block">
+      <form action="/blog/busca/" method="get" role="search" class="hidden lg:block">
         <label for="header-q" class="sr-only">Buscar no blog</label>
         <input
           id="header-q"
@@ -29,13 +29,13 @@ const cats = await existingCategories();
           class="w-44 rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink outline-none focus:border-pink"
         />
       </form>
-      <a href="/busca/" aria-label="Buscar no blog" class="text-navy hover:text-pink lg:hidden">
+      <a href="/blog/busca/" aria-label="Buscar no blog" class="text-navy hover:text-pink lg:hidden">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="h-5 w-5" aria-hidden="true">
           <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
         </svg>
       </a>
       <a
-        href="https://loja.azpetshop.com.br"
+        href="https://www.azpetshop.com.br/"
         class="rounded-full bg-navy px-4 py-2 text-xs font-bold text-white hover:bg-navy-700"
       >
         Visitar a loja

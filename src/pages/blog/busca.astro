@@ -1,12 +1,12 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Buscar no blog — AZ Pet Shop" description="Busque artigos, guias e comparativos do blog da AZ Pet Shop.">
   <meta name="robots" content="noindex, follow" slot="head" />
   <section class="mx-auto max-w-6xl px-4 py-12">
     <h1 class="mb-6 text-3xl font-black text-navy">Buscar no blog</h1>
-    <form action="/busca/" method="get" role="search" class="mb-4 flex gap-2">
+    <form action="/blog/busca/" method="get" role="search" class="mb-4 flex gap-2">
       <label for="q" class="sr-only">Termo de busca</label>
       <input
         id="q"
@@ -102,7 +102,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const q = new URLSearchParams(location.search).get("q") ?? "";
     input.value = q;
     status.textContent = "Carregando…";
-    const data: Entry[] = await fetch("/busca.json").then((r) => r.json());
+    const data: Entry[] = await fetch("/blog/busca.json").then((r) => r.json());
     index = data.map((e) => ({
       ...e,
       _t: norm(e.title),
@@ -117,7 +117,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       clearTimeout(timer);
       timer = window.setTimeout(() => {
         const v = input.value.trim();
-        history.replaceState(null, "", v ? `/busca/?q=${encodeURIComponent(v)}` : "/busca/");
+        history.replaceState(null, "", v ? `/blog/busca/?q=${encodeURIComponent(v)}` : "/blog/busca/");
         run(v);
       }, 150);
     });

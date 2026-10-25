@@ -17,13 +17,15 @@ const enabled = import.meta.env.PROD;
       gtag("js", new Date());
       gtag("config", GA_ID);
 
-      // Cliques que levam à loja irmã viram o evento "click_loja", para marcar
-      // como evento-chave no GA4 e medir quanto o blog manda de tráfego à loja.
+      // Cliques que levam à loja viram o evento "click_loja", para marcar como
+      // evento-chave no GA4 e medir quanto o blog manda de tráfego à loja. A loja
+      // é dona de www.azpetshop.com.br e repassa /blog a este Worker, então
+      // "loja" é qualquer página do mesmo host fora de /blog.
       document.addEventListener("click", (e) => {
         const link = e.target instanceof Element ? e.target.closest("a[href]") : null;
         if (!link) return;
         const url = new URL(link.href, location.href);
-        if (url.hostname !== "loja.azpetshop.com.br") return;
+        if (url.hostname !== "www.azpetshop.com.br" || url.pathname.startsWith("/blog")) return;
         gtag("event", "click_loja", {
           link_url: url.href,
           utm_campaign: url.searchParams.get("utm_campaign") || undefined,
