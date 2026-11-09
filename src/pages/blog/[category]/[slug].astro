@@ -10,6 +10,7 @@ import BreedInfographic from "../../../components/BreedInfographic.astro";
 import ArticleJsonLd from "../../../components/ArticleJsonLd.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import RelatedPosts from "../../../components/RelatedPosts.astro";
+import StoreCta from "../../../components/StoreCta.astro";
 import { labelFor } from "../../../lib/categories";
 
 export async function getStaticPaths() {
@@ -103,6 +104,8 @@ const breadcrumbItems = [
         </section>
       )
     }
+
+    <StoreCta category={d.category} />
 
     <p class="mt-10 rounded-xl bg-mist p-4 text-xs text-ink/60">
       Transparência: alguns links acima são de afiliados. A AZ Pet Shop pode receber

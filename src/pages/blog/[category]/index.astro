@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import ArticleCard from "../../../components/ArticleCard.astro";
-import { existingCategories, labelFor } from "../../../lib/categories";
+import { existingCategories, labelFor, storeCategoryUrl } from "../../../lib/categories";
 
 export async function getStaticPaths() {
   const cats = await existingCategories();
@@ -20,11 +20,23 @@ export async function getStaticPaths() {
 const { category } = Astro.params;
 const { posts } = Astro.props;
 const label = labelFor(category as string);
+const storeUrl = storeCategoryUrl(category as string);
 ---
 
 <BaseLayout title={`${label} — AZ Pet Shop`} description={`Guias e comparativos sobre ${label.toLowerCase()}.`}>
   <section class="mx-auto max-w-6xl px-4 py-12">
-    <h1 class="mb-8 text-3xl font-black text-navy">{label}</h1>
+    <h1 class="mb-6 text-3xl font-black text-navy">{label}</h1>
+    {
+      storeUrl && (
+        <a
+          href={storeUrl}
+          class="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-navy bg-paper px-5 py-4 hover:border-pink"
+        >
+          <span class="font-bold text-navy">Produtos para {label.toLowerCase()} na loja AZ Pet Shop</span>
+          <span class="font-bold text-pink">Ver produtos →</span>
+        </a>
+      )
+    }
     {
       posts.length === 0 ? (
         <p class="text-ink/70">Em breve, conteúdo novo nesta categoria.</p>

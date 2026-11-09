@@ -2,21 +2,83 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/ArticleCard.astro";
+import { DOG_BREEDS } from "../../lib/breeds";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
 );
+
+const [featured, ...rest] = posts;
+const grid = rest.slice(0, 9);
+
+const THUMBS = new Set(
+  Object.keys(import.meta.glob("/public/img/racas/*.webp")).map((k) => k.replace(/^\/public/, "")),
+);
+
+// Só raças cujo artigo existe e está publicado, em ordem alfabética.
+const breeds = posts
+  .filter((p) => p.data.category === "caes" && DOG_BREEDS[p.id.split("/")[1]])
+  .map((p) => {
+    const slug = p.id.split("/")[1];
+    // Miniatura recortada só com a foto da raça (scripts/breed-thumbs.mjs);
+    // se ainda não foi gerada, cai na capa do artigo.
+    const thumb = `/img/racas/${slug}.webp`;
+    const hero = THUMBS.has(thumb) ? thumb : p.data.hero;
+    return { href: `/blog/${p.id}/`, name: DOG_BREEDS[slug], hero };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 ---
 
-<BaseLayout title="Blog — AZ Pet Shop" description="Todas as publicações da AZ Pet Shop.">
+<BaseLayout title="Blog AZ Pet Shop — Guias e comparativos para cuidar do seu pet">
+  <!-- Hero / destaque -->
+  {
+    featured && (
+      <section class="mx-auto max-w-6xl px-4 pt-10">
+        <a
+          href={`/blog/${featured.id}/`}
+          class="group grid items-center gap-6 overflow-hidden rounded-3xl border border-line bg-paper md:grid-cols-2"
+        >
+          <div class="aspect-[16/10] overflow-hidden bg-mist md:aspect-auto md:h-full">
+            {featured.data.hero ? (
+              <img
+                src={featured.data.hero}
+                alt={featured.data.heroAlt ?? featured.data.title}
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div class="flex h-full min-h-64 w-full items-center justify-center text-6xl text-cyan">
+                🐾
+              </div>
+            )}
+          </div>
+          <div class="p-8">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-pink">
+              Em destaque
+            </span>
+            <h1 class="mt-3 text-3xl font-black leading-tight text-navy md:text-4xl">
+              {featured.data.title}
+            </h1>
+            <p class="mt-4 text-ink/75">{featured.data.excerpt}</p>
+            <span class="mt-6 inline-block font-bold text-pink group-hover:text-pink-600">
+              Ler o guia completo →
+            </span>
+          </div>
+        </a>
+      </section>
+    )
+  }
+
+  <!-- Grade -->
   <section class="mx-auto max-w-6xl px-4 py-12">
-    <h1 class="mb-2 text-3xl font-black text-navy">Todas as publicações</h1>
-    <p class="mb-8 text-ink/70">Guias, cuidados e comparativos para cães, gatos, pássaros e roedores.</p>
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <h2 class="text-2xl font-extrabold text-navy">Últimas publicações</h2>
+      <a href="/blog/todas/" class="font-bold text-pink hover:text-pink-600">Ver todas as publicações →</a>
+    </div>
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {
-        posts.map((p) => (
+        grid.map((p) => (
           <ArticleCard
-            href={`/blog/${p.id}`}
+            href={`/blog/${p.id}/`}
             title={p.data.title}
             excerpt={p.data.excerpt}
             category={p.data.category}
@@ -28,4 +90,30 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
       }
     </div>
   </section>
+
+  <!-- Atalhos para raças de cachorro -->
+  {
+    breeds.length > 0 && (
+      <section class="mx-auto max-w-6xl px-4 pb-16">
+        <h2 class="mb-2 text-2xl font-extrabold text-navy">Raças de cachorro</h2>
+        <p class="mb-6 text-ink/70">Conheça personalidade, cuidados e características de cada raça.</p>
+        <ul class="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {breeds.map((b) => (
+            <li>
+              <a href={b.href} class="group flex flex-col items-center gap-2 text-center">
+                <span class="block h-16 w-16 overflow-hidden rounded-full border-2 border-line bg-mist transition-colors group-hover:border-pink sm:h-20 sm:w-20">
+                  {b.hero ? (
+                    <img src={b.hero} alt="" loading="lazy" class="h-full w-full object-cover" />
+                  ) : (
+                    <span class="flex h-full w-full items-center justify-center text-2xl text-cyan">🐾</span>
+                  )}
+                </span>
+                <span class="text-xs font-bold leading-tight text-navy group-hover:text-pink sm:text-sm">{b.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </BaseLayout>

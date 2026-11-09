@@ -9,6 +9,24 @@ export const CATEGORY_LABELS: Record<string, string> = {
   peixes: "Peixes",
 };
 
+// Categoria equivalente na loja (www.azpetshop.com.br/categoria/<slug>).
+// Categorias sem equivalente (ex.: "home") não ganham link.
+const STORE_CATEGORY: Record<string, string> = {
+  caes: "caes",
+  gatos: "gatos",
+  passaros: "passaros",
+  roedores: "roedores",
+  hamster: "roedores",
+  peixes: "aquarismo",
+};
+
+export const STORE_URL = "https://www.azpetshop.com.br/";
+
+export function storeCategoryUrl(cat: string): string | null {
+  const slug = STORE_CATEGORY[cat];
+  return slug ? `${STORE_URL}categoria/${slug}` : null;
+}
+
 export function labelFor(cat: string): string {
   return CATEGORY_LABELS[cat] ?? cat.charAt(0).toUpperCase() + cat.slice(1);
 }

@@ -1,0 +1,31 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ArticleCard from "../../../components/ArticleCard.astro";
+
+const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+);
+---
+
+<BaseLayout title="Todas as publicações — Blog AZ Pet Shop" description="Todas as publicações da AZ Pet Shop.">
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h1 class="mb-2 text-3xl font-black text-navy">Todas as publicações</h1>
+    <p class="mb-8 text-ink/70">Guias, cuidados e comparativos para cães, gatos, pássaros e roedores.</p>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        posts.map((p) => (
+          <ArticleCard
+            href={`/blog/${p.id}`}
+            title={p.data.title}
+            excerpt={p.data.excerpt}
+            category={p.data.category}
+            type={p.data.type}
+            hero={p.data.hero}
+            heroAlt={p.data.heroAlt}
+          />
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+// Chamada para a loja no fim do artigo: leva à categoria equivalente na loja
+// (www.azpetshop.com.br/categoria/...) ou, sem equivalente, à home da loja.
+import { STORE_URL, labelFor, storeCategoryUrl } from "../lib/categories";
+
+interface Props {
+  category: string;
+}
+
+const { category } = Astro.props;
+const categoryUrl = storeCategoryUrl(category);
+const href = categoryUrl ?? STORE_URL;
+const title = categoryUrl
+  ? `Produtos para ${labelFor(category).toLowerCase()} na AZ Pet Shop`
+  : "Tudo para o seu pet na AZ Pet Shop";
+---
+
+<aside class="mt-10 rounded-2xl border-2 border-navy bg-paper p-6">
+  <p class="text-xs font-extrabold uppercase tracking-wider text-pink">Loja AZ Pet Shop</p>
+  <p class="mt-2 text-xl font-black text-navy">{title}</p>
+  <p class="mt-2 text-ink/75">Confira preços e disponibilidade direto na nossa loja online.</p>
+  <a
+    href={href}
+    class="mt-4 inline-block rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-white hover:bg-navy-700"
+  >
+    Ver produtos na loja →
+  </a>
+</aside>

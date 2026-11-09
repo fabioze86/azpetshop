@@ -16,7 +16,8 @@ export default defineConfig({
   site: "https://www.azpetshop.com.br",
   trailingSlash: "always",
   // A raiz de www.azpetshop.com.br é a loja (Next, na Vercel), que repassa /blog
-  // a este Worker; a home do Astro não é alcançável, então fica fora do sitemap.
+  // a este Worker. A home do blog vive em /blog/; a raiz do Worker só redireciona.
+  redirects: { "/": "/blog/" },
   integrations: [mdx(), sitemap({ filter: (page) => page !== "https://www.azpetshop.com.br/" })],
   // As imagens do blog ficam no Cloudflare Images (imagedelivery.net), enviadas por
   // scripts/upload-image.mjs; o Worker não precisa de binding de storage. O nome
