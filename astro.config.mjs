@@ -19,8 +19,9 @@ export default defineConfig({
   // a este Worker. A home do blog vive em /blog/; a raiz do Worker só redireciona.
   redirects: { "/": "/blog/" },
   integrations: [mdx(), sitemap({ filter: (page) => page !== "https://www.azpetshop.com.br/" })],
-  // As imagens do blog ficam no Cloudflare Images (imagedelivery.net), enviadas por
-  // scripts/upload-image.mjs; o Worker não precisa de binding de storage. O nome
-  // customizado só evita que o adapter crie um binding "IMAGES" por padrão.
+  // As imagens do blog ficam no R2 (bucket azpetshop-images, servido em
+  // cdn.azpetshop.com.br) e são enviadas por scripts/upload-image.mjs via wrangler;
+  // o Worker não precisa de binding de storage. O nome customizado só evita que o
+  // adapter crie um binding "IMAGES" de Cloudflare Images (pago) por padrão.
   adapter: cloudflare({ imagesBindingName: "ASTRO_IMAGES_SERVICE" }),
 });

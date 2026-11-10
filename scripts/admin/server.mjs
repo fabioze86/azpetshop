@@ -74,7 +74,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 
   try {
     await writeFile(tmpPath, req.file.buffer);
-    const url = await uploadFile({ category, slug, filename, filePath: tmpPath, contentType });
+    const url = uploadFile({ category, slug, filename, filePath: tmpPath, contentType });
     res.json({ url });
   } catch (err) {
     res.status(500).json({ error: String(err.message ?? err) });

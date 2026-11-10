@@ -5,7 +5,7 @@ import { loadJson } from "../lib/store.ts";
 import { PautaSchema, SelecionadosSchema, DossiesSchema, EscritaResponseSchema } from "../lib/schemas.ts";
 import { pautaJsonPath, selecionadosJsonPath, dossiesJsonPath, blogMdxPath, REPO_ROOT } from "../lib/paths.ts";
 import { loadKnowledge } from "../lib/knowledge.ts";
-import { imageDeliveryUrl } from "../lib/images.ts";
+import { cdnImageUrl } from "../lib/images.ts";
 import { buildEscreverPrompt } from "../lib/prompts.ts";
 import { createGeminiClient, generateJson } from "../lib/gemini.ts";
 import { buildFrontmatter, assembleMdx } from "../lib/frontmatter.ts";
@@ -36,7 +36,7 @@ async function main() {
     throw new Error(`Post já existe em ${targetPath}. Use --force pra sobrescrever.`);
   }
 
-  const imagens = selecionados.map((s) => ({ nome: s.nome, url: imageDeliveryUrl(pauta.categoria, slug, s.nome) }));
+  const imagens = selecionados.map((s) => ({ nome: s.nome, url: cdnImageUrl(pauta.categoria, slug, s.nome) }));
   const knowledge = await loadKnowledge(join(REPO_ROOT, "content-hub", "knowledge"));
   const prompt = buildEscreverPrompt({ pauta, selecionados, dossies, knowledge, imagens });
 

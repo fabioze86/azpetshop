@@ -1,7 +1,6 @@
 // scripts/upload-image.mjs
-// Sobe uma imagem local pro Cloudflare Images (ID "posts/<categoria>/<slug>/<nome>")
-// e, se for a capa do post, já atualiza o "hero:" (e "heroAlt:") no .mdx correspondente.
-// Credenciais: CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_IMAGES_TOKEN em .env.local (ver .env.example).
+// Sobe uma imagem local pro bucket R2 (azpetshop-images) e, se for a capa do
+// post, já atualiza o "hero:" (e "heroAlt:") no .mdx correspondente.
 //
 // Capa do post:
 //   node scripts/upload-image.mjs --post caes/rottweiler --file ./rottweiler.jpg --hero --alt "Rottweiler deitado no jardim"
@@ -14,10 +13,13 @@
 import { readFile, writeFile, access } from "node:fs/promises";
 import { dirname, join, extname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { imageIdFor, loadCredentials, uploadImage } from "./lib/cf-images.mjs";
+import { execSync } from "node:child_process";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BLOG_DIR = join(ROOT, "src", "content", "blog");
+const WRANGLER = join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "wrangler.cmd" : "wrangler");
+const BUCKET = "azpetshop-images";
+const CDN = "https://cdn.azpetshop.com.br";
 const MIME = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -75,17 +77,17 @@ async function main() {
   const fileName = args.hero
     ? `hero${ext}`
     : `${slugify(args.name ?? basename(args.file, ext))}${ext}`;
-  const [categoria, slug] = args.post.split("/");
-  const id = imageIdFor(categoria, slug, basename(fileName, ext));
+  const key = `posts/${args.post}/${fileName}`;
+  const url = `${CDN}/${key}`;
 
-  console.log(`Subindo ${args.file} -> Cloudflare Images (${id}) ...`);
-  const url = await uploadImage({
-    id,
-    data: await readFile(args.file),
-    filename: fileName,
-    contentType,
-    creds: loadCredentials(),
-  });
+  const quote = (s) => `"${String(s).replace(/"/g, '\\"')}"`;
+  const cmd = [
+    WRANGLER, "r2", "object", "put", `${BUCKET}/${key}`,
+    "--file", args.file, "--content-type", contentType, "--remote", "-y",
+  ].map(quote).join(" ");
+
+  console.log(`Subindo ${args.file} -> ${BUCKET}/${key} ...`);
+  execSync(cmd, { cwd: ROOT, stdio: "inherit" });
 
   if (args.hero) {
     let content = await readFile(mdxPath, "utf8");
